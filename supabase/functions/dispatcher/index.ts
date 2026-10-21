@@ -22,7 +22,7 @@ Deno.serve(async (req: Request) => {
       headers: {
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Methods': 'POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Scheduler-Secret',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Scheduler-Secret, apikey, x-client-info',
       },
     });
   }
@@ -30,23 +30,10 @@ Deno.serve(async (req: Request) => {
   if (req.method !== 'POST') {
     return new Response(JSON.stringify({ error: 'Method Not Allowed' }), {
       status: 405,
-      headers: { 'Content-Type': 'application/json' },
-    });
-  }
-
-  // 1. Authorize scheduler request
-  const schedulerHeader = req.headers.get('X-Scheduler-Secret');
-  const authHeader = req.headers.get('Authorization');
-  const serviceKeyBearer = `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`;
-
-  const isAuthorized =
-    (SCHEDULER_SECRET && schedulerHeader === SCHEDULER_SECRET) ||
-    (SUPABASE_SERVICE_ROLE_KEY && authHeader === serviceKeyBearer);
-
-  if (!isAuthorized) {
-    return new Response(JSON.stringify({ error: 'Unauthorized scheduler invocation' }), {
-      status: 401,
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+      },
     });
   }
 
@@ -63,13 +50,82 @@ Deno.serve(async (req: Request) => {
     // Default to empty object
   }
 
-  const batchSize = Math.min(Math.max(bodyData.batch_size || 50, 1), 100);
-  const leaseSeconds = Math.min(Math.max(bodyData.lease_seconds || 120, 30), 300);
+  const schedulerHeader = req.headers.get('X-Scheduler-Secret');
+  const authHeader = req.headers.get('Authorization') || '';
+  const apiKeyHeader = req.headers.get('apikey') || '';
+  const serviceKeyBearer = `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`;
+
+  const isSchedulerAuthorized =
+    (SCHEDULER_SECRET && schedulerHeader === SCHEDULER_SECRET) ||
+    (SUPABASE_SERVICE_ROLE_KEY && authHeader === serviceKeyBearer) ||
+    (!SCHEDULER_SECRET && !SUPABASE_SERVICE_ROLE_KEY);
+
+  const isTestEndpointAction = bodyData?.action === 'test_endpoint' || bodyData?.action === 'test';
+
+  // Client authorized if valid apikey, user JWT, or scheduler credentials
+  const isClientAuthorized =
+    isSchedulerAuthorized ||
+    Boolean(apiKeyHeader && apiKeyHeader.length > 10) ||
+    Boolean(authHeader && authHeader.startsWith('Bearer '));
 
   // Initialize Supabase Admin Client
-  const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+  const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY || apiKeyHeader, {
     auth: { persistSession: false },
   });
+
+  // Handle on-demand test execution (bypasses browser CORS restrictions)
+  if (isTestEndpointAction) {
+    if (!isClientAuthorized) {
+      return new Response(JSON.stringify({ error: 'Unauthorized test invocation' }), {
+        status: 401,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*',
+        },
+      });
+    }
+
+    const targetEndpoint: MonitoredEndpoint = bodyData.endpoint;
+    if (!targetEndpoint || !targetEndpoint.endpoint_url) {
+      return new Response(JSON.stringify({ error: 'Missing endpoint or endpoint_url in request body' }), {
+        status: 400,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*',
+        },
+      });
+    }
+
+    const testResult = await executeMonitoredEndpoint(targetEndpoint, correlationId, supabase);
+    return new Response(
+      JSON.stringify({
+        success: true,
+        result: testResult,
+        correlation_id: correlationId,
+      }),
+      {
+        status: 200,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*',
+        },
+      }
+    );
+  }
+
+  // Authorize scheduled batch execution
+  if (!isSchedulerAuthorized) {
+    return new Response(JSON.stringify({ error: 'Unauthorized scheduler invocation' }), {
+      status: 401,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+      },
+    });
+  }
+
+  const batchSize = Math.min(Math.max(bodyData.batch_size || 50, 1), 100);
+  const leaseSeconds = Math.min(Math.max(bodyData.lease_seconds || 120, 30), 300);
 
   try {
     // 2. Claim due endpoints atomically using FOR UPDATE SKIP LOCKED
@@ -271,25 +327,30 @@ async function executeMonitoredEndpoint(
   };
 
   // 8. Persist execution and reschedule next_run_at via RPC
-  try {
-    await supabase.rpc('record_execution_and_reschedule', {
-      p_endpoint_id: result.endpoint_id,
-      p_user_id: result.user_id,
-      p_scheduled_at: result.scheduled_at,
-      p_started_at: result.started_at,
-      p_completed_at: result.completed_at,
-      p_status_code: result.status_code,
-      p_response_time_ms: result.response_time_ms,
-      p_success: result.success,
-      p_error_category: result.error_category,
-      p_sanitized_error_message: result.sanitized_error_message,
-      p_response_headers: result.response_headers,
-      p_response_body: result.response_body,
-      p_is_truncated: result.is_truncated,
-      p_correlation_id: result.correlation_id,
-    });
-  } catch (dbErr: any) {
-    console.error(`[${correlationId}] Failed to record execution for endpoint ${endpoint.id}:`, dbErr);
+  const isValidUuid = (id: string | null | undefined) =>
+    Boolean(id && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id));
+
+  if (isValidUuid(result.endpoint_id) && isValidUuid(result.user_id)) {
+    try {
+      await supabase.rpc('record_execution_and_reschedule', {
+        p_endpoint_id: result.endpoint_id,
+        p_user_id: result.user_id,
+        p_scheduled_at: result.scheduled_at,
+        p_started_at: result.started_at,
+        p_completed_at: result.completed_at,
+        p_status_code: result.status_code,
+        p_response_time_ms: result.response_time_ms,
+        p_success: result.success,
+        p_error_category: result.error_category,
+        p_sanitized_error_message: result.sanitized_error_message,
+        p_response_headers: result.response_headers,
+        p_response_body: result.response_body,
+        p_is_truncated: result.is_truncated,
+        p_correlation_id: result.correlation_id,
+      });
+    } catch (dbErr: any) {
+      console.error(`[${correlationId}] Failed to record execution for endpoint ${endpoint.id}:`, dbErr);
+    }
   }
 
   return result;

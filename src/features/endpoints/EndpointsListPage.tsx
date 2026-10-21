@@ -112,11 +112,14 @@ export const EndpointsListPage: React.FC = () => {
     try {
       const res = await triggerTestRun(ep);
       await refetch();
-      const statusText = res.success
-        ? `Status ${res.status_code || 200}`
-        : res.error_category === 'CONNECTION_REFUSED'
-          ? 'Browser CORS/Network (Dispatcher unaffected)'
-          : `Status ${res.status_code || 'Err'}`;
+      let statusText = `Status ${res.status_code || (res.success ? 200 : 'Err')}`;
+      if (res.error_category === 'SSRF_BLOCKED') {
+        statusText = 'Blocked by SSRF filter';
+      } else if (res.error_category === 'TIMEOUT') {
+        statusText = 'Timeout exceeded';
+      } else if (res.error_category === 'CONNECTION_REFUSED') {
+        statusText = 'Connection refused / Unreachable';
+      }
       setToastMsg({
         type: res.success ? 'success' : 'error',
         text: `Test run finished: ${statusText} in ${res.response_time_ms}ms. Schedule updated!`,

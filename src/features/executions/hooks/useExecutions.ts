@@ -129,109 +129,126 @@ export function useExecutions(filters?: ExecutionFilterOptions) {
 
   const triggerTestMutation = useMutation({
     mutationFn: async (endpoint: MonitoredEndpoint): Promise<ExecutionResult> => {
-      const startTime = performance.now();
       const scheduledAt = new Date().toISOString();
       const startedAt = scheduledAt;
       const correlationId = `manual-${Date.now()}`;
+      const intervalSec = Math.max(300, endpoint.interval_seconds || 300);
+      const nextRunAt = new Date(Date.now() + intervalSec * 1000).toISOString();
 
-      // Execute browser-side test or call Edge Function
-      let statusCode: number | null = null;
-      let success = false;
-      let errorCategory: any = null;
-      let sanitizedMessage: string | null = null;
-      let responseBody = '';
-      let isTruncated = false;
-      const responseHeaders: Record<string, string> = {};
+      let executionResult: ExecutionResult | null = null;
 
-      try {
-        const res = await fetch(endpoint.endpoint_url, {
-          method: 'GET',
-          signal: AbortSignal.timeout(endpoint.request_timeout_ms || 10000),
-        });
-        statusCode = res.status;
-        success = res.ok;
-        if (!success) {
-          errorCategory = 'HTTP_ERROR';
-          sanitizedMessage = `HTTP status ${res.status} ${res.statusText}`;
-        }
-        res.headers.forEach((v, k) => {
-          responseHeaders[k] = v;
-        });
-        const text = await res.text();
-        responseBody = text.slice(0, 32768);
-        isTruncated = text.length > 32768;
-      } catch (err: any) {
-        success = false;
-        if (err.name === 'TimeoutError') {
-          errorCategory = 'TIMEOUT';
-          sanitizedMessage = `Request timed out after ${endpoint.request_timeout_ms || 10000}ms`;
-        } else if (err.name === 'TypeError') {
-          errorCategory = 'CONNECTION_REFUSED';
-          sanitizedMessage = 'Browser blocked request (CORS/Network error). Serverless background runner bypasses browser CORS.';
-        } else {
-          errorCategory = 'UNKNOWN';
-          sanitizedMessage = err.message || 'Request failed';
+      // 1. Primary execution path: Invoke serverless Edge Function 'dispatcher'
+      // This bypasses browser CORS entirely and executes genuine health check from Supabase cloud
+      if (isSupabaseConfigured) {
+        try {
+          const { data, error: fnError } = await supabase.functions.invoke('dispatcher', {
+            body: {
+              action: 'test_endpoint',
+              endpoint: {
+                ...endpoint,
+                user_id: user?.id || endpoint.user_id,
+              },
+            },
+          });
+
+          if (!fnError && data?.success && data?.result) {
+            executionResult = data.result;
+          } else if (fnError) {
+            console.warn('Edge Function dispatcher returned error, trying browser fallback:', fnError);
+          }
+        } catch (invokeErr) {
+          console.warn('Edge Function invocation failed, trying browser fallback:', invokeErr);
         }
       }
 
-      const completedAt = new Date().toISOString();
-      const durationMs = Math.round(performance.now() - startTime);
+      // 2. Fallback execution path: Client-side fetch (if Edge function unavailable or offline)
+      if (!executionResult) {
+        const startTime = performance.now();
+        let statusCode: number | null = null;
+        let success = false;
+        let errorCategory: any = null;
+        let sanitizedMessage: string | null = null;
+        let responseBody = '';
+        let isTruncated = false;
+        const responseHeaders: Record<string, string> = {};
+
+        // Construct URL with query parameters
+        let requestUrl = endpoint.endpoint_url;
+        try {
+          const u = new URL(requestUrl);
+          if (endpoint.query_params && typeof endpoint.query_params === 'object') {
+            Object.entries(endpoint.query_params).forEach(([k, v]) => {
+              if (k.trim()) u.searchParams.append(k.trim(), v);
+            });
+          }
+          requestUrl = u.toString();
+        } catch {}
+
+        try {
+          const res = await fetch(requestUrl, {
+            method: 'GET',
+            headers: endpoint.headers || {},
+            signal: AbortSignal.timeout(endpoint.request_timeout_ms || 10000),
+          });
+          statusCode = res.status;
+          success = res.ok;
+          if (!success) {
+            errorCategory = 'HTTP_ERROR';
+            sanitizedMessage = `HTTP status ${res.status} ${res.statusText}`;
+          }
+          res.headers.forEach((v, k) => {
+            responseHeaders[k] = v;
+          });
+          const text = await res.text();
+          responseBody = text.slice(0, 32768);
+          isTruncated = text.length > 32768;
+        } catch (err: any) {
+          success = false;
+          if (err.name === 'TimeoutError') {
+            errorCategory = 'TIMEOUT';
+            sanitizedMessage = `Request timed out after ${endpoint.request_timeout_ms || 10000}ms`;
+          } else if (err.name === 'TypeError') {
+            errorCategory = 'CONNECTION_REFUSED';
+            sanitizedMessage = 'Browser blocked request (CORS/Network error). Serverless background runner bypasses browser CORS.';
+          } else {
+            errorCategory = 'UNKNOWN';
+            sanitizedMessage = err.message || 'Request failed';
+          }
+        }
+
+        const completedAt = new Date().toISOString();
+        const durationMs = Math.round(performance.now() - startTime);
+
+        executionResult = {
+          endpoint_id: endpoint.id,
+          user_id: user?.id || 'demo-user',
+          scheduled_at: scheduledAt,
+          started_at: startedAt,
+          completed_at: completedAt,
+          status_code: statusCode,
+          response_time_ms: durationMs,
+          success,
+          error_category: errorCategory,
+          sanitized_error_message: sanitizedMessage,
+          response_headers: responseHeaders,
+          response_body: responseBody,
+          is_truncated: isTruncated,
+          correlation_id: correlationId,
+        };
+      }
 
       const record: EndpointExecution = {
         id: `x1000000-0000-0000-0000-${Date.now().toString().slice(-12)}`,
-        endpoint_id: endpoint.id,
-        user_id: user?.id || 'demo-user',
-        scheduled_at: scheduledAt,
-        started_at: startedAt,
-        completed_at: completedAt,
-        status_code: statusCode,
-        response_time_ms: durationMs,
-        success,
-        error_category: errorCategory,
-        sanitized_error_message: sanitizedMessage,
-        response_headers: responseHeaders,
-        response_body: responseBody,
-        is_truncated: isTruncated,
-        correlation_id: correlationId,
-        created_at: completedAt,
+        ...executionResult,
+        created_at: executionResult.completed_at || new Date().toISOString(),
       };
-
-      const intervalSec = Math.max(300, endpoint.interval_seconds || 300);
-      const nextRunAt = new Date(Date.now() + intervalSec * 1000).toISOString();
 
       if (isDemoMode || !isSupabaseConfigured) {
         localExecutions.unshift(record);
         updateLocalEndpointRun(endpoint.id, startedAt, nextRunAt);
       } else {
-        let rpcSucceeded = false;
+        // Update monitored_endpoints with the new execution timestamp and next schedule
         try {
-          const { error: rpcError } = await supabase.rpc('record_execution_and_reschedule', {
-            p_endpoint_id: endpoint.id,
-            p_user_id: user?.id,
-            p_scheduled_at: scheduledAt,
-            p_started_at: startedAt,
-            p_completed_at: completedAt,
-            p_status_code: statusCode,
-            p_response_time_ms: durationMs,
-            p_success: success,
-            p_error_category: errorCategory,
-            p_sanitized_error_message: sanitizedMessage,
-            p_response_headers: responseHeaders,
-            p_response_body: responseBody,
-            p_is_truncated: isTruncated,
-            p_correlation_id: correlationId,
-          });
-
-          if (!rpcError) {
-            rpcSucceeded = true;
-          } else {
-            console.warn('RPC record_execution_and_reschedule failed:', rpcError);
-          }
-        } catch (e) {
-          console.warn('RPC record_execution_and_reschedule call exception:', e);
-        }
-
-        if (!rpcSucceeded) {
           await supabase
             .from('monitored_endpoints')
             .update({
@@ -242,11 +259,9 @@ export function useExecutions(filters?: ExecutionFilterOptions) {
             })
             .eq('id', endpoint.id);
 
-          try {
-            await supabase.from('endpoint_executions').insert(record);
-          } catch (e) {
-            console.warn('Direct execution insert ignored:', e);
-          }
+          await supabase.from('endpoint_executions').insert(record);
+        } catch (e) {
+          console.warn('Database update fallback:', e);
         }
       }
 
