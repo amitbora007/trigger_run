@@ -1,0 +1,63 @@
+import React from 'react';
+import { Card, CardContent, Typography, Box, SvgIconProps } from '@mui/material';
+
+interface MetricCardProps {
+  title: string;
+  value: string | number;
+  subtext?: string;
+  icon: React.ReactElement<SvgIconProps>;
+  colorVariant?: 'primary' | 'secondary' | 'success' | 'warning' | 'error';
+}
+
+const colorMap = {
+  primary: { bg: 'rgba(16, 185, 129, 0.1)', text: '#10B981' },
+  secondary: { bg: 'rgba(99, 102, 241, 0.1)', text: '#6366F1' },
+  success: { bg: 'rgba(16, 185, 129, 0.1)', text: '#10B981' },
+  warning: { bg: 'rgba(245, 158, 11, 0.1)', text: '#F59E0B' },
+  error: { bg: 'rgba(239, 68, 68, 0.1)', text: '#EF4444' },
+};
+
+export const MetricCard: React.FC<MetricCardProps> = ({
+  title,
+  value,
+  subtext,
+  icon,
+  colorVariant = 'primary',
+}) => {
+  const colors = colorMap[colorVariant];
+
+  return (
+    <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+      <CardContent>
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+          <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 600 }}>
+            {title}
+          </Typography>
+          <Box
+            sx={{
+              p: 1,
+              borderRadius: '8px',
+              backgroundColor: colors.bg,
+              color: colors.text,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            {React.cloneElement(icon, { sx: { fontSize: 20 } })}
+          </Box>
+        </Box>
+
+        <Typography variant="h4" sx={{ fontWeight: 800, mb: 0.5 }}>
+          {value}
+        </Typography>
+
+        {subtext && (
+          <Typography variant="caption" color="text.secondary">
+            {subtext}
+          </Typography>
+        )}
+      </CardContent>
+    </Card>
+  );
+};

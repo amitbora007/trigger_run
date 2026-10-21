@@ -1,0 +1,332 @@
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
+import {
+  Box,
+  Typography,
+  Grid,
+  Card,
+  CardContent,
+  Button,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Chip,
+  CircularProgress,
+} from '@mui/material';
+import SensorsIcon from '@mui/icons-material/Sensors';
+import SpeedIcon from '@mui/icons-material/Speed';
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
+import HistoryToggleOffIcon from '@mui/icons-material/HistoryToggleOff';
+import AddIcon from '@mui/icons-material/Add';
+import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
+import {
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  CartesianGrid,
+} from 'recharts';
+import { useEndpoints } from '../endpoints/hooks/useEndpoints';
+import { useExecutions } from '../executions/hooks/useExecutions';
+import { MetricCard } from '@/components/common/MetricCard';
+import { StatusChip } from '@/components/common/StatusChip';
+import { formatLatency, formatRelativeTime } from '@/lib/formatters';
+
+export const DashboardOverviewPage: React.FC = () => {
+  const navigate = useNavigate();
+  const { endpoints, isLoading: isEndpointsLoading } = useEndpoints();
+  const { executions, isLoading: isExecutionsLoading } = useExecutions({ limit: 100 });
+
+  const activeEndpoints = endpoints.filter((e) => e.is_enabled);
+  const pausedEndpoints = endpoints.filter((e) => !e.is_enabled);
+
+  const totalExecutions = executions.length;
+  const successfulExecutions = executions.filter((x) => x.success).length;
+  const failureExecutions = totalExecutions - successfulExecutions;
+  const successRate =
+    totalExecutions > 0 ? Math.round((successfulExecutions / totalExecutions) * 100) : 100;
+
+  const totalLatency = executions.reduce((acc, curr) => acc + (curr.response_time_ms || 0), 0);
+  const avgLatency = totalExecutions > 0 ? Math.round(totalLatency / totalExecutions) : 0;
+
+  const recentFailures = executions.filter((x) => !x.success).slice(0, 5);
+
+  // Latency trends for Recharts
+  const latencyData = [...executions]
+    .reverse()
+    .slice(-15)
+    .map((x, i) => ({
+      index: i + 1,
+      latency: x.response_time_ms,
+      time: new Date(x.started_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    }));
+
+  // Hourly volume breakdown
+  const volumeData = [
+    { name: 'Healthy (2xx)', count: successfulExecutions, fill: '#10B981' },
+    { name: 'Failed (4xx/5xx/Net)', count: failureExecutions, fill: '#EF4444' },
+  ];
+
+  const isLoading = isEndpointsLoading || isExecutionsLoading;
+
+  if (isLoading) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', p: 8 }}>
+        <CircularProgress color="primary" />
+      </Box>
+    );
+  }
+
+  return (
+    <Box>
+      {/* Top Banner */}
+      <Box
+        sx={{
+          display: 'flex',
+          flexDirection: { xs: 'column', sm: 'row' },
+          justifyContent: 'space-between',
+          alignItems: { xs: 'flex-start', sm: 'center' },
+          gap: 2,
+          mb: 3.5,
+        }}
+      >
+        <Box>
+          <Typography variant="h4" sx={{ fontWeight: 800 }}>
+            Fleet Reliability Dashboard
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            Autonomous serverless monitoring health and performance metrics.
+          </Typography>
+        </Box>
+
+        <Button
+          variant="contained"
+          startIcon={<AddIcon />}
+          onClick={() => navigate('/endpoints')}
+        >
+          Add Monitored API
+        </Button>
+      </Box>
+
+      {/* 4 Metric Cards */}
+      <Grid container spacing={2.5} sx={{ mb: 3.5 }}>
+        <Grid item xs={12} sm={6} md={3}>
+          <MetricCard
+            title="Configured Endpoints"
+            value={endpoints.length}
+            subtext={`${activeEndpoints.length} Active • ${pausedEndpoints.length} Paused`}
+            icon={<SensorsIcon />}
+            colorVariant="primary"
+          />
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <MetricCard
+            title="Success Rate"
+            value={`${successRate}%`}
+            subtext={`${successfulExecutions} passed of ${totalExecutions} runs`}
+            icon={<CheckCircleOutlineIcon />}
+            colorVariant={successRate >= 95 ? 'success' : 'warning'}
+          />
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <MetricCard
+            title="Average Latency"
+            value={formatLatency(avgLatency)}
+            subtext="Across all monitored targets"
+            icon={<SpeedIcon />}
+            colorVariant="secondary"
+          />
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <MetricCard
+            title="Recorded Executions"
+            value={totalExecutions}
+            subtext="Retained within 7-day window"
+            icon={<HistoryToggleOffIcon />}
+            colorVariant="primary"
+          />
+        </Grid>
+      </Grid>
+
+      {/* Visual Analytics Charts */}
+      <Grid container spacing={2.5} sx={{ mb: 3.5 }}>
+        {/* Latency History Chart */}
+        <Grid item xs={12} lg={8}>
+          <Card sx={{ height: '100%', p: 2 }}>
+            <CardContent>
+              <Typography variant="h6" sx={{ fontWeight: 700, mb: 0.5 }}>
+                Response Latency Trend (ms)
+              </Typography>
+              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 2 }}>
+                Real-time latency trajectory for recent executions.
+              </Typography>
+
+              <Box sx={{ width: '100%', height: 260 }}>
+                {latencyData.length > 0 ? (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={latencyData}>
+                      <defs>
+                        <linearGradient id="latencyGradient" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#10B981" stopOpacity={0.4} />
+                          <stop offset="95%" stopColor="#10B981" stopOpacity={0.0} />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#1F2937" vertical={false} />
+                      <XAxis dataKey="time" stroke="#6B7280" fontSize={11} tickLine={false} />
+                      <YAxis
+                        stroke="#6B7280"
+                        fontSize={11}
+                        tickLine={false}
+                        tickFormatter={(v) => `${v}ms`}
+                      />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: '#111827',
+                          border: '1px solid #1F2937',
+                          borderRadius: 8,
+                          color: '#F9FAFB',
+                        }}
+                      />
+                      <Area
+                        type="monotone"
+                        dataKey="latency"
+                        stroke="#10B981"
+                        strokeWidth={2}
+                        fillOpacity={1}
+                        fill="url(#latencyGradient)"
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      height: '100%',
+                    }}
+                  >
+                    <Typography variant="body2" color="text.secondary">
+                      Awaiting initial execution metrics...
+                    </Typography>
+                  </Box>
+                )}
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        {/* Success vs Failure Bar Chart */}
+        <Grid item xs={12} lg={4}>
+          <Card sx={{ height: '100%', p: 2 }}>
+            <CardContent>
+              <Typography variant="h6" sx={{ fontWeight: 700, mb: 0.5 }}>
+                Health Breakdown
+              </Typography>
+              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 2 }}>
+                Distribution of execution outcomes.
+              </Typography>
+
+              <Box sx={{ width: '100%', height: 260 }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={volumeData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#1F2937" vertical={false} />
+                    <XAxis dataKey="name" stroke="#6B7280" fontSize={11} tickLine={false} />
+                    <YAxis stroke="#6B7280" fontSize={11} tickLine={false} allowDecimals={false} />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: '#111827',
+                        border: '1px solid #1F2937',
+                        borderRadius: 8,
+                        color: '#F9FAFB',
+                      }}
+                    />
+                    <Bar dataKey="count" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
+
+      {/* Recent Failures Live Card */}
+      <Card sx={{ p: 2 }}>
+        <CardContent>
+          <Box
+            sx={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              mb: 2,
+            }}
+          >
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <ErrorOutlineIcon sx={{ color: '#EF4444' }} />
+              <Typography variant="h6" sx={{ fontWeight: 700 }}>
+                Recent Incident Alerts
+              </Typography>
+            </Box>
+
+            <Button size="small" onClick={() => navigate('/executions')}>
+              View Full History
+            </Button>
+          </Box>
+
+          {recentFailures.length === 0 ? (
+            <Box sx={{ py: 4, textAlign: 'center' }}>
+              <Typography variant="body2" sx={{ color: '#10B981', fontWeight: 600 }}>
+                All systems optimal. Zero execution failures detected in recent window.
+              </Typography>
+            </Box>
+          ) : (
+            <TableContainer>
+              <Table size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Time</TableCell>
+                    <TableCell>HTTP Status</TableCell>
+                    <TableCell>Error Category</TableCell>
+                    <TableCell>Sanitized Error Diagnostic</TableCell>
+                    <TableCell align="right">Latency</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {recentFailures.map((rf) => (
+                    <TableRow key={rf.id} hover>
+                      <TableCell>{formatRelativeTime(rf.started_at)}</TableCell>
+                      <TableCell>
+                        <StatusChip type="http-status" value={rf.status_code} />
+                      </TableCell>
+                      <TableCell>
+                        <Chip
+                          label={rf.error_category || 'ERROR'}
+                          size="small"
+                          color="error"
+                          variant="outlined"
+                        />
+                      </TableCell>
+                      <TableCell sx={{ color: '#EF4444', maxWidth: 300, wordBreak: 'break-word' }}>
+                        {rf.sanitized_error_message || 'Non-2xx response received'}
+                      </TableCell>
+                      <TableCell align="right" sx={{ fontWeight: 600 }}>
+                        {formatLatency(rf.response_time_ms)}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          )}
+        </CardContent>
+      </Card>
+    </Box>
+  );
+};
