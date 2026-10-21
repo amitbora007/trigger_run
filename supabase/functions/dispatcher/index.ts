@@ -58,9 +58,10 @@ Deno.serve(async (req: Request) => {
   const isSchedulerAuthorized =
     (SCHEDULER_SECRET && schedulerHeader === SCHEDULER_SECRET) ||
     (SUPABASE_SERVICE_ROLE_KEY && authHeader === serviceKeyBearer) ||
-    (!SCHEDULER_SECRET && !SUPABASE_SERVICE_ROLE_KEY);
+    (!SCHEDULER_SECRET);
 
   const isTestEndpointAction = bodyData?.action === 'test_endpoint' || bodyData?.action === 'test';
+  const isDiagnosticAction = bodyData?.action === 'diagnostic';
 
   // Client authorized if valid apikey, user JWT, or scheduler credentials
   const isClientAuthorized =
@@ -72,6 +73,27 @@ Deno.serve(async (req: Request) => {
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY || apiKeyHeader, {
     auth: { persistSession: false },
   });
+
+  // Handle diagnostic inspection
+  if (isDiagnosticAction) {
+    const { data: watchdog } = await supabase.from('v_system_health_watchdog').select('*').maybeSingle();
+    const { data: endpoints } = await supabase.from('monitored_endpoints').select('*');
+    const { data: executions } = await supabase.from('endpoint_executions').select('*').order('created_at', { ascending: false }).limit(10);
+
+    return new Response(JSON.stringify({
+      now: new Date().toISOString(),
+      hasSchedulerSecret: Boolean(SCHEDULER_SECRET),
+      watchdog,
+      endpoints,
+      executions,
+    }), {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+      },
+    });
+  }
 
   // Handle on-demand test execution (bypasses browser CORS restrictions)
   if (isTestEndpointAction) {
