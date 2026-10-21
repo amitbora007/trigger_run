@@ -19,7 +19,7 @@ import { useAuth } from './AuthContext';
 
 export const LoginPage: React.FC = () => {
   const navigate = useNavigate();
-  const { signIn, signUp, enableDemoMode, isDemoMode } = useAuth();
+  const { signIn, signUp, enableDemoMode } = useAuth();
 
   const [tabIndex, setTabIndex] = useState(0); // 0 = signin, 1 = signup
   const [email, setEmail] = useState('');
@@ -160,25 +160,21 @@ export const LoginPage: React.FC = () => {
             </Stack>
           </form>
 
-          {isDemoMode && (
-            <>
-              <Divider sx={{ my: 3 }}>
-                <Typography variant="caption" color="text.secondary">
-                  EVALUATION MODE
-                </Typography>
-              </Divider>
+          <Divider sx={{ my: 3 }}>
+            <Typography variant="caption" color="text.secondary">
+              QUICK EVALUATION
+            </Typography>
+          </Divider>
 
-              <Button
-                variant="outlined"
-                color="secondary"
-                fullWidth
-                onClick={handleDemoSignIn}
-                startIcon={<FlashOnIcon />}
-              >
-                Explore Sandbox Demo (Instant Access)
-              </Button>
-            </>
-          )}
+          <Button
+            variant="outlined"
+            color="secondary"
+            fullWidth
+            onClick={handleDemoSignIn}
+            startIcon={<FlashOnIcon />}
+          >
+            Explore Sandbox Demo (Instant 1-Click Access)
+          </Button>
         </CardContent>
       </Card>
     </Box>
