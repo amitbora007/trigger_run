@@ -46,7 +46,14 @@ export const LoginPage: React.FC = () => {
         setTabIndex(0);
       }
     } catch (err: any) {
-      setError(err.message || 'Authentication failed');
+      const msg = err.message || '';
+      if (msg.toLowerCase().includes('rate limit')) {
+        setError(
+          'Supabase free-tier email rate limit reached (max 3-4 emails/hour). To bypass: toggle off "Confirm email" in Supabase Auth Settings, or click "Explore Sandbox Demo" below for instant access.'
+        );
+      } else {
+        setError(msg || 'Authentication failed');
+      }
     } finally {
       setLoading(false);
     }
