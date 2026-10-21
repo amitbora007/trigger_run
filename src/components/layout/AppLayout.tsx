@@ -183,28 +183,38 @@ export const AppLayout: React.FC = () => {
           boxShadow: 'none',
         }}
       >
-        <Toolbar sx={{ justifyContent: 'space-between' }}>
+        <Toolbar sx={{ justifyContent: 'space-between', px: { xs: 1.5, sm: 3 } }}>
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
             <IconButton
               color="inherit"
               edge="start"
               onClick={handleDrawerToggle}
-              sx={{ mr: 2, display: { md: 'none' } }}
+              sx={{ mr: { xs: 1, sm: 2 }, display: { md: 'none' } }}
             >
               <MenuIcon />
             </IconButton>
-            <Typography variant="h6" noWrap component="div" sx={{ fontWeight: 700 }}>
+            <Typography
+              variant="h6"
+              noWrap
+              component="div"
+              sx={{
+                fontWeight: 700,
+                fontSize: { xs: '1.05rem', sm: '1.25rem' },
+                maxWidth: { xs: '180px', sm: 'none' },
+              }}
+            >
               {NAV_ITEMS.find((item) => item.path === location.pathname)?.text || 'Dashboard'}
             </Typography>
           </Box>
 
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             {isDemoMode && (
               <Chip
-                label="Sandbox Demo"
+                label="Demo"
                 size="small"
                 color="secondary"
                 variant="outlined"
+                sx={{ height: 24, fontSize: '0.75rem' }}
               />
             )}
             <Chip
@@ -265,10 +275,10 @@ export const AppLayout: React.FC = () => {
         component="main"
         sx={{
           flexGrow: 1,
-          p: { xs: 2, sm: 3, md: 4 },
+          p: { xs: 1.5, sm: 2.5, md: 4 },
           width: { md: `calc(100% - ${DRAWER_WIDTH}px)` },
-          mt: '64px',
-          minHeight: 'calc(100vh - 64px)',
+          mt: { xs: '56px', sm: '64px' },
+          minHeight: { xs: 'calc(100vh - 56px)', sm: 'calc(100vh - 64px)' },
           backgroundColor: '#0B0F19',
         }}
       >

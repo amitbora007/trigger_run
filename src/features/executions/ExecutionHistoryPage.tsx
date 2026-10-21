@@ -17,6 +17,11 @@ import {
   Tab,
   CircularProgress,
   Button,
+  Chip,
+  Stack,
+  Divider,
+  useMediaQuery,
+  useTheme,
 } from '@mui/material';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import { useExecutions } from './hooks/useExecutions';
@@ -27,6 +32,8 @@ import { formatDateTime, formatRelativeTime, formatLatency } from '@/lib/formatt
 import type { EndpointExecution } from '@/types';
 
 export const ExecutionHistoryPage: React.FC = () => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const { endpoints } = useEndpoints();
   const [selectedEndpointId, setSelectedEndpointId] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<'all' | 'success' | 'failure'>('all');
@@ -42,7 +49,10 @@ export const ExecutionHistoryPage: React.FC = () => {
   return (
     <Box>
       <Box sx={{ mb: 3 }}>
-        <Typography variant="h4" sx={{ fontWeight: 800 }}>
+        <Typography
+          variant="h4"
+          sx={{ fontWeight: 800, fontSize: { xs: '1.5rem', sm: '1.85rem', md: '2.125rem' } }}
+        >
           Execution History
         </Typography>
         <Typography variant="body2" color="text.secondary">
@@ -51,19 +61,22 @@ export const ExecutionHistoryPage: React.FC = () => {
       </Box>
 
       {/* Filter Toolbar */}
-      <Card sx={{ mb: 3, p: 2 }}>
+      <Card sx={{ mb: 3, p: 1.5 }}>
         <Box
           sx={{
             display: 'flex',
             flexDirection: { xs: 'column', md: 'row' },
             justifyContent: 'space-between',
-            alignItems: { md: 'center' },
+            alignItems: { xs: 'stretch', md: 'center' },
             gap: 2,
           }}
         >
           <Tabs
             value={statusFilter}
             onChange={(_, val) => setStatusFilter(val)}
+            variant="scrollable"
+            scrollButtons="auto"
+            allowScrollButtonsMobile
             sx={{ minHeight: 40 }}
           >
             <Tab label="All Results" value="all" sx={{ minHeight: 40, py: 0.5 }} />
@@ -71,7 +84,7 @@ export const ExecutionHistoryPage: React.FC = () => {
             <Tab label="Failed" value="failure" sx={{ minHeight: 40, py: 0.5 }} />
           </Tabs>
 
-          <FormControl size="small" sx={{ minWidth: 260 }}>
+          <FormControl size="small" sx={{ width: { xs: '100%', md: 280 } }}>
             <InputLabel>Filter By Endpoint</InputLabel>
             <Select
               value={selectedEndpointId}
@@ -89,8 +102,8 @@ export const ExecutionHistoryPage: React.FC = () => {
         </Box>
       </Card>
 
-      {/* History Table */}
-      <Card>
+      {/* Content: Cards on Mobile / Table on Desktop */}
+      <Card sx={{ overflow: 'hidden' }}>
         {isLoading ? (
           <Box sx={{ display: 'flex', justifyContent: 'center', p: 6 }}>
             <CircularProgress color="primary" />
@@ -104,7 +117,93 @@ export const ExecutionHistoryPage: React.FC = () => {
               Executions will appear here once the minute dispatcher runs or when you trigger a manual test.
             </Typography>
           </Box>
+        ) : isMobile ? (
+          /* Mobile Adaptive Cards */
+          <Stack spacing={2} sx={{ p: 1.5 }}>
+            {executions.map((x) => {
+              const ep = endpointMap.get(x.endpoint_id);
+              return (
+                <Card
+                  key={x.id}
+                  sx={{
+                    p: 2,
+                    border: '1px solid #1F2937',
+                    backgroundColor: '#111827',
+                    cursor: 'pointer',
+                    '&:hover': { borderColor: '#374151' },
+                  }}
+                  onClick={() => setActiveExecution(x)}
+                >
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 1, mb: 1 }}>
+                    <Box sx={{ minWidth: 0, flex: 1 }}>
+                      <Typography
+                        variant="subtitle1"
+                        sx={{ fontWeight: 700, color: '#F9FAFB', wordBreak: 'break-word', lineHeight: 1.3 }}
+                      >
+                        {ep?.name || 'Deleted / Unknown Endpoint'}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
+                        {formatRelativeTime(x.started_at)} • {formatDateTime(x.started_at)}
+                      </Typography>
+                    </Box>
+                    <StatusChip type="execution-result" value={x.success} />
+                  </Box>
+
+                  <Divider sx={{ my: 1.5, borderColor: '#1F2937' }} />
+
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 1, mb: 1.5 }}>
+                    <StatusChip type="http-status" value={x.status_code} />
+                    <Chip
+                      label={formatLatency(x.response_time_ms)}
+                      size="small"
+                      variant="outlined"
+                      sx={{ borderColor: '#374151', fontWeight: 600 }}
+                    />
+                    {x.error_category ? (
+                      <Chip
+                        label={x.error_category}
+                        size="small"
+                        color="error"
+                        variant="outlined"
+                      />
+                    ) : (
+                      <Chip
+                        label="Healthy"
+                        size="small"
+                        color="success"
+                        variant="outlined"
+                      />
+                    )}
+                  </Box>
+
+                  {x.sanitized_error_message && !x.success && (
+                    <Box sx={{ p: 1.25, mb: 1.5, backgroundColor: 'rgba(239, 68, 68, 0.08)', borderRadius: 1.5 }}>
+                      <Typography variant="caption" sx={{ color: '#EF4444', wordBreak: 'break-word', display: 'block' }}>
+                        {x.sanitized_error_message}
+                      </Typography>
+                    </Box>
+                  )}
+
+                  <Box sx={{ display: 'flex', justifyContent: 'flex-end', pt: 1, borderTop: '1px solid #1F2937' }}>
+                    <Button
+                      size="small"
+                      variant="outlined"
+                      startIcon={<VisibilityIcon />}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setActiveExecution(x);
+                      }}
+                      sx={{ borderColor: '#374151', color: '#9CA3AF', width: { xs: '100%', sm: 'auto' }, minHeight: 36 }}
+                    >
+                      Details & Telemetry
+                    </Button>
+                  </Box>
+                </Card>
+              );
+            })}
+          </Stack>
         ) : (
+          /* Desktop Table View */
           <TableContainer>
             <Table>
               <TableHead>

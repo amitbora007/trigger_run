@@ -24,6 +24,11 @@ import {
   CircularProgress,
   Snackbar,
   Alert,
+  useMediaQuery,
+  useTheme,
+  Grid,
+  Stack,
+  Divider,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import SearchIcon from '@mui/icons-material/Search';
@@ -51,6 +56,9 @@ export const EndpointsListPage: React.FC = () => {
   } = useEndpoints();
 
   const { triggerTestRun } = useExecutions();
+
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
   const [search, setSearch] = useState('');
   const [filterTab, setFilterTab] = useState<'all' | 'active' | 'paused'>('all');
@@ -139,13 +147,16 @@ export const EndpointsListPage: React.FC = () => {
           display: 'flex',
           flexDirection: { xs: 'column', sm: 'row' },
           justifyContent: 'space-between',
-          alignItems: { xs: 'flex-start', sm: 'center' },
+          alignItems: { xs: 'stretch', sm: 'center' },
           gap: 2,
           mb: 3,
         }}
       >
         <Box>
-          <Typography variant="h4" sx={{ fontWeight: 800 }}>
+          <Typography
+            variant="h4"
+            sx={{ fontWeight: 800, fontSize: { xs: '1.5rem', sm: '1.85rem', md: '2.125rem' } }}
+          >
             Monitored Endpoints
           </Typography>
           <Typography variant="body2" color="text.secondary">
@@ -158,6 +169,7 @@ export const EndpointsListPage: React.FC = () => {
           startIcon={<AddIcon />}
           onClick={handleOpenCreate}
           size="medium"
+          sx={{ width: { xs: '100%', sm: 'auto' }, minHeight: 42 }}
         >
           New Endpoint
         </Button>
@@ -170,13 +182,16 @@ export const EndpointsListPage: React.FC = () => {
             display: 'flex',
             flexDirection: { xs: 'column', md: 'row' },
             justifyContent: 'space-between',
-            alignItems: { md: 'center' },
+            alignItems: { xs: 'stretch', md: 'center' },
             gap: 2,
           }}
         >
           <Tabs
             value={filterTab}
             onChange={(_, val) => setFilterTab(val)}
+            variant="scrollable"
+            scrollButtons="auto"
+            allowScrollButtonsMobile
             sx={{ minHeight: 40 }}
           >
             <Tab label={`All (${endpoints.length})`} value="all" sx={{ minHeight: 40, py: 0.5 }} />
@@ -204,13 +219,13 @@ export const EndpointsListPage: React.FC = () => {
                 </InputAdornment>
               ),
             }}
-            sx={{ minWidth: { md: 320 } }}
+            sx={{ width: { xs: '100%', md: 320 } }}
           />
         </Box>
       </Card>
 
-      {/* Table */}
-      <Card>
+      {/* Content: Cards on Mobile / Table on Desktop */}
+      <Card sx={{ overflow: 'hidden' }}>
         {isLoading ? (
           <Box sx={{ display: 'flex', justifyContent: 'center', p: 6 }}>
             <CircularProgress color="primary" />
@@ -231,7 +246,137 @@ export const EndpointsListPage: React.FC = () => {
               </Button>
             )}
           </Box>
+        ) : isMobile ? (
+          /* Mobile Adaptive Cards */
+          <Stack spacing={2} sx={{ p: 1.5 }}>
+            {filteredEndpoints.map((ep) => (
+              <Card
+                key={ep.id}
+                sx={{
+                  p: 2,
+                  border: '1px solid #1F2937',
+                  backgroundColor: '#111827',
+                }}
+              >
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 1, mb: 1 }}>
+                  <Box sx={{ minWidth: 0, flex: 1 }}>
+                    <Typography
+                      variant="subtitle1"
+                      sx={{ fontWeight: 700, color: '#F9FAFB', wordBreak: 'break-word', lineHeight: 1.3 }}
+                    >
+                      {ep.name}
+                    </Typography>
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        fontFamily: '"JetBrains Mono", monospace',
+                        color: '#9CA3AF',
+                        display: 'block',
+                        wordBreak: 'break-all',
+                        mt: 0.5,
+                      }}
+                    >
+                      {ep.endpoint_url}
+                    </Typography>
+                  </Box>
+                  <StatusChip type="endpoint-status" value={ep.is_enabled} />
+                </Box>
+
+                <Divider sx={{ my: 1.5, borderColor: '#1F2937' }} />
+
+                <Grid container spacing={1.5} sx={{ mb: 2 }}>
+                  <Grid item xs={6}>
+                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+                      Cadence
+                    </Typography>
+                    <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                      {formatInterval(ep.interval_seconds)}
+                    </Typography>
+                  </Grid>
+                  <Grid item xs={6}>
+                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+                      Next Execution
+                    </Typography>
+                    <Typography
+                      variant="body2"
+                      sx={{ color: ep.is_enabled ? '#10B981' : '#9CA3AF', fontWeight: 600 }}
+                    >
+                      {ep.is_enabled ? formatRelativeTime(ep.next_run_at) : 'Paused'}
+                    </Typography>
+                  </Grid>
+                  <Grid item xs={12}>
+                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+                      Last Execution
+                    </Typography>
+                    <Typography variant="body2" sx={{ color: '#E5E7EB' }}>
+                      {formatRelativeTime(ep.last_run_at)} {ep.last_run_at ? `(${formatDateTime(ep.last_run_at)})` : ''}
+                    </Typography>
+                  </Grid>
+                </Grid>
+
+                <Box
+                  sx={{
+                    display: 'flex',
+                    flexWrap: 'wrap',
+                    alignItems: 'center',
+                    gap: 1,
+                    pt: 1.5,
+                    borderTop: '1px solid #1F2937',
+                  }}
+                >
+                  <Button
+                    size="small"
+                    variant="contained"
+                    color="primary"
+                    disabled={testingId === ep.id}
+                    startIcon={testingId === ep.id ? <CircularProgress size={16} color="inherit" /> : <FlashOnIcon />}
+                    onClick={() => handleManualTest(ep)}
+                    sx={{ flex: '1 1 auto', minHeight: 38 }}
+                  >
+                    {testingId === ep.id ? 'Running...' : 'Test Run'}
+                  </Button>
+
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    color="inherit"
+                    startIcon={ep.is_enabled ? <PauseIcon /> : <PlayArrowIcon />}
+                    onClick={() => handleToggle(ep)}
+                    sx={{ flex: '1 1 auto', minHeight: 38, borderColor: '#374151' }}
+                  >
+                    {ep.is_enabled ? 'Pause' : 'Resume'}
+                  </Button>
+
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    color="inherit"
+                    startIcon={<EditIcon />}
+                    onClick={() => handleOpenEdit(ep)}
+                    sx={{ minHeight: 38, borderColor: '#374151' }}
+                  >
+                    Edit
+                  </Button>
+
+                  <IconButton
+                    size="small"
+                    color="error"
+                    onClick={() => setDeleteTarget(ep)}
+                    sx={{
+                      minWidth: 38,
+                      minHeight: 38,
+                      border: '1px solid #374151',
+                      borderRadius: '8px',
+                    }}
+                  >
+                    <DeleteOutlineIcon fontSize="small" />
+                  </IconButton>
+                </Box>
+              </Card>
+            ))}
+          </Stack>
         ) : (
+          /* Desktop Table View */
           <TableContainer>
             <Table>
               <TableHead>

@@ -15,6 +15,9 @@ import {
   TableRow,
   Chip,
   CircularProgress,
+  useMediaQuery,
+  useTheme,
+  Stack,
 } from '@mui/material';
 import SensorsIcon from '@mui/icons-material/Sensors';
 import SpeedIcon from '@mui/icons-material/Speed';
@@ -41,6 +44,8 @@ import { formatLatency, formatRelativeTime } from '@/lib/formatters';
 
 export const DashboardOverviewPage: React.FC = () => {
   const navigate = useNavigate();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const { endpoints, isLoading: isEndpointsLoading } = useEndpoints();
   const { executions, isLoading: isExecutionsLoading } = useExecutions({ limit: 100 });
 
@@ -92,13 +97,16 @@ export const DashboardOverviewPage: React.FC = () => {
           display: 'flex',
           flexDirection: { xs: 'column', sm: 'row' },
           justifyContent: 'space-between',
-          alignItems: { xs: 'flex-start', sm: 'center' },
+          alignItems: { xs: 'stretch', sm: 'center' },
           gap: 2,
           mb: 3.5,
         }}
       >
         <Box>
-          <Typography variant="h4" sx={{ fontWeight: 800 }}>
+          <Typography
+            variant="h4"
+            sx={{ fontWeight: 800, fontSize: { xs: '1.5rem', sm: '1.85rem', md: '2.125rem' } }}
+          >
             Fleet Reliability Dashboard
           </Typography>
           <Typography variant="body2" color="text.secondary">
@@ -110,6 +118,7 @@ export const DashboardOverviewPage: React.FC = () => {
           variant="contained"
           startIcon={<AddIcon />}
           onClick={() => navigate('/endpoints')}
+          sx={{ width: { xs: '100%', sm: 'auto' }, minHeight: 40 }}
         >
           Add Monitored API
         </Button>
@@ -171,7 +180,7 @@ export const DashboardOverviewPage: React.FC = () => {
               <Box sx={{ width: '100%', height: 260 }}>
                 {latencyData.length > 0 ? (
                   <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={latencyData}>
+                    <AreaChart data={latencyData} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
                       <defs>
                         <linearGradient id="latencyGradient" x1="0" y1="0" x2="0" y2="1">
                           <stop offset="5%" stopColor="#10B981" stopOpacity={0.4} />
@@ -236,9 +245,15 @@ export const DashboardOverviewPage: React.FC = () => {
 
               <Box sx={{ width: '100%', height: 260 }}>
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={volumeData}>
+                  <BarChart data={volumeData} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#1F2937" vertical={false} />
-                    <XAxis dataKey="name" stroke="#6B7280" fontSize={11} tickLine={false} />
+                    <XAxis
+                      dataKey="name"
+                      stroke="#6B7280"
+                      fontSize={11}
+                      tickLine={false}
+                      tickFormatter={(v) => (isMobile ? (v.startsWith('Healthy') ? 'Healthy' : 'Failed') : v)}
+                    />
                     <YAxis stroke="#6B7280" fontSize={11} tickLine={false} allowDecimals={false} />
                     <Tooltip
                       contentStyle={{
@@ -286,6 +301,43 @@ export const DashboardOverviewPage: React.FC = () => {
                 All systems optimal. Zero execution failures detected in recent window.
               </Typography>
             </Box>
+          ) : isMobile ? (
+            <Stack spacing={1.5}>
+              {recentFailures.map((rf) => (
+                <Box
+                  key={rf.id}
+                  sx={{
+                    p: 1.5,
+                    border: '1px solid #1F2937',
+                    borderRadius: 2,
+                    backgroundColor: 'rgba(239, 68, 68, 0.04)',
+                  }}
+                >
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                    <Typography variant="caption" color="text.secondary">
+                      {formatRelativeTime(rf.started_at)}
+                    </Typography>
+                    <Typography variant="caption" sx={{ fontWeight: 700, color: '#10B981' }}>
+                      {formatLatency(rf.response_time_ms)}
+                    </Typography>
+                  </Box>
+
+                  <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', mb: 1 }}>
+                    <StatusChip type="http-status" value={rf.status_code} />
+                    <Chip
+                      label={rf.error_category || 'ERROR'}
+                      size="small"
+                      color="error"
+                      variant="outlined"
+                    />
+                  </Box>
+
+                  <Typography variant="caption" sx={{ color: '#EF4444', wordBreak: 'break-word', display: 'block' }}>
+                    {rf.sanitized_error_message || 'Non-2xx response received'}
+                  </Typography>
+                </Box>
+              ))}
+            </Stack>
           ) : (
             <TableContainer>
               <Table size="small">

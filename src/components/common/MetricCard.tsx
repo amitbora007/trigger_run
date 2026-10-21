@@ -28,14 +28,14 @@ export const MetricCard: React.FC<MetricCardProps> = ({
 
   return (
     <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-      <CardContent>
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-          <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 600 }}>
+      <CardContent sx={{ p: { xs: 1.75, sm: 2 }, '&:last-child': { pb: { xs: 1.75, sm: 2 } } }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: { xs: 1, sm: 2 } }}>
+          <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 600, fontSize: { xs: '0.8rem', sm: '0.875rem' } }}>
             {title}
           </Typography>
           <Box
             sx={{
-              p: 1,
+              p: { xs: 0.75, sm: 1 },
               borderRadius: '8px',
               backgroundColor: colors.bg,
               color: colors.text,
@@ -44,16 +44,24 @@ export const MetricCard: React.FC<MetricCardProps> = ({
               justifyContent: 'center',
             }}
           >
-            {React.cloneElement(icon, { sx: { fontSize: 20 } })}
+            {React.cloneElement(icon, { sx: { fontSize: { xs: 18, sm: 20 } } })}
           </Box>
         </Box>
 
-        <Typography variant="h4" sx={{ fontWeight: 800, mb: 0.5 }}>
+        <Typography
+          variant="h4"
+          sx={{
+            fontWeight: 800,
+            mb: 0.5,
+            fontSize: { xs: '1.45rem', sm: '1.75rem', md: '2.125rem' },
+            letterSpacing: '-0.02em',
+          }}
+        >
           {value}
         </Typography>
 
         {subtext && (
-          <Typography variant="caption" color="text.secondary">
+          <Typography variant="caption" color="text.secondary" sx={{ fontSize: { xs: '0.7rem', sm: '0.75rem' } }}>
             {subtext}
           </Typography>
         )}

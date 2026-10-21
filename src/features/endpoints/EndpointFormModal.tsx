@@ -20,6 +20,8 @@ import {
   Chip,
   Tabs,
   Tab,
+  useMediaQuery,
+  useTheme,
 } from '@mui/material';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import AddIcon from '@mui/icons-material/Add';
@@ -71,6 +73,8 @@ export const EndpointFormModal: React.FC<EndpointFormModalProps> = ({
   onClose,
   onSubmit,
 }) => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [tabIndex, setTabIndex] = useState(0);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
@@ -155,20 +159,40 @@ export const EndpointFormModal: React.FC<EndpointFormModalProps> = ({
   };
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle sx={{ pb: 1, fontWeight: 700 }}>
+    <Dialog
+      open={open}
+      onClose={onClose}
+      maxWidth="sm"
+      fullWidth
+      fullScreen={isMobile}
+    >
+      <DialogTitle
+        sx={{
+          pb: 1,
+          px: { xs: 2, sm: 3 },
+          pt: { xs: 2, sm: 2.5 },
+          fontWeight: 700,
+          fontSize: { xs: '1.15rem', sm: '1.25rem' },
+        }}
+      >
         {endpoint ? 'Edit Monitored Endpoint' : 'Create New Monitored Endpoint'}
       </DialogTitle>
 
-      <Box sx={{ borderBottom: 1, borderColor: 'divider', px: 3 }}>
-        <Tabs value={tabIndex} onChange={(_, val) => setTabIndex(val)}>
+      <Box sx={{ borderBottom: 1, borderColor: 'divider', px: { xs: 1.5, sm: 3 } }}>
+        <Tabs
+          value={tabIndex}
+          onChange={(_, val) => setTabIndex(val)}
+          variant="scrollable"
+          scrollButtons="auto"
+          allowScrollButtonsMobile
+        >
           <Tab label="Configuration" />
           <Tab label="Headers & Query Params" />
         </Tabs>
       </Box>
 
       <form onSubmit={handleSubmit(handleFormSubmit)}>
-        <DialogContent sx={{ pt: 2.5 }}>
+        <DialogContent sx={{ pt: 2.5, px: { xs: 2, sm: 3 } }}>
           {submitError && (
             <Alert severity="error" sx={{ mb: 2 }}>
               {submitError}
@@ -342,9 +366,19 @@ export const EndpointFormModal: React.FC<EndpointFormModalProps> = ({
                     No custom headers configured. Default User-Agent is provided.
                   </Typography>
                 ) : (
-                  <Stack spacing={1}>
+                  <Stack spacing={1.5}>
                     {headerFields.map((field, index) => (
-                      <Box key={field.id} sx={{ display: 'flex', gap: 1 }}>
+                      <Box
+                        key={field.id}
+                        sx={{
+                          display: 'flex',
+                          flexDirection: { xs: 'column', sm: 'row' },
+                          gap: 1,
+                          p: { xs: 1.5, sm: 0 },
+                          backgroundColor: { xs: '#1F2937', sm: 'transparent' },
+                          borderRadius: 1.5,
+                        }}
+                      >
                         <TextField
                           placeholder="Header Name (e.g. X-Api-Key)"
                           size="small"
@@ -361,6 +395,7 @@ export const EndpointFormModal: React.FC<EndpointFormModalProps> = ({
                           size="small"
                           color="error"
                           onClick={() => removeHeader(index)}
+                          sx={{ alignSelf: { xs: 'flex-end', sm: 'center' } }}
                         >
                           <DeleteOutlineIcon fontSize="small" />
                         </IconButton>
@@ -390,9 +425,19 @@ export const EndpointFormModal: React.FC<EndpointFormModalProps> = ({
                     No query parameters configured.
                   </Typography>
                 ) : (
-                  <Stack spacing={1}>
+                  <Stack spacing={1.5}>
                     {queryParamFields.map((field, index) => (
-                      <Box key={field.id} sx={{ display: 'flex', gap: 1 }}>
+                      <Box
+                        key={field.id}
+                        sx={{
+                          display: 'flex',
+                          flexDirection: { xs: 'column', sm: 'row' },
+                          gap: 1,
+                          p: { xs: 1.5, sm: 0 },
+                          backgroundColor: { xs: '#1F2937', sm: 'transparent' },
+                          borderRadius: 1.5,
+                        }}
+                      >
                         <TextField
                           placeholder="Key"
                           size="small"
@@ -409,6 +454,7 @@ export const EndpointFormModal: React.FC<EndpointFormModalProps> = ({
                           size="small"
                           color="error"
                           onClick={() => removeQueryParam(index)}
+                          sx={{ alignSelf: { xs: 'flex-end', sm: 'center' } }}
                         >
                           <DeleteOutlineIcon fontSize="small" />
                         </IconButton>
@@ -421,11 +467,21 @@ export const EndpointFormModal: React.FC<EndpointFormModalProps> = ({
           )}
         </DialogContent>
 
-        <DialogActions sx={{ px: 3, pb: 2.5 }}>
-          <Button onClick={onClose} color="inherit" disabled={isSubmitting}>
+        <DialogActions sx={{ px: { xs: 2, sm: 3 }, pb: { xs: 2, sm: 2.5 }, gap: 1 }}>
+          <Button
+            onClick={onClose}
+            color="inherit"
+            disabled={isSubmitting}
+            sx={{ width: { xs: '100%', sm: 'auto' }, minHeight: 40 }}
+          >
             Cancel
           </Button>
-          <Button type="submit" variant="contained" disabled={isSubmitting}>
+          <Button
+            type="submit"
+            variant="contained"
+            disabled={isSubmitting}
+            sx={{ width: { xs: '100%', sm: 'auto' }, minHeight: 40 }}
+          >
             {isSubmitting ? 'Saving...' : endpoint ? 'Update Endpoint' : 'Save & Activate'}
           </Button>
         </DialogActions>

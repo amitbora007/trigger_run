@@ -43,30 +43,36 @@ export const ExecutionDetailModal: React.FC<ExecutionDetailModalProps> = ({
       PaperProps={{
         sx: {
           width: { xs: '100%', sm: 540 },
+          maxWidth: '100vw',
           backgroundColor: '#111827',
-          p: 3,
+          p: { xs: 2, sm: 3 },
         },
       }}
     >
       {/* Header */}
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
-        <Box>
+        <Box sx={{ minWidth: 0, pr: 1 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
             <StatusChip type="execution-result" value={execution.success} />
             <StatusChip type="http-status" value={execution.status_code} />
           </Box>
-          <Typography variant="h6" sx={{ fontWeight: 800 }}>
+          <Typography variant="h6" sx={{ fontWeight: 800, wordBreak: 'break-word' }}>
             {endpointName || 'Execution Telemetry'}
           </Typography>
           <Typography
             variant="caption"
-            sx={{ fontFamily: '"JetBrains Mono", monospace', color: '#9CA3AF' }}
+            sx={{
+              fontFamily: '"JetBrains Mono", monospace',
+              color: '#9CA3AF',
+              wordBreak: 'break-all',
+              display: 'block',
+            }}
           >
             Correlation: {execution.correlation_id}
           </Typography>
         </Box>
 
-        <IconButton onClick={onClose} size="small">
+        <IconButton onClick={onClose} size="small" sx={{ p: 1 }}>
           <CloseIcon />
         </IconButton>
       </Box>
@@ -80,7 +86,7 @@ export const ExecutionDetailModal: React.FC<ExecutionDetailModalProps> = ({
             <Typography variant="body2" sx={{ fontWeight: 700 }}>
               {execution.error_category || 'EXECUTION_FAILURE'}
             </Typography>
-            <Typography variant="caption" sx={{ display: 'block' }}>
+            <Typography variant="caption" sx={{ display: 'block', wordBreak: 'break-word' }}>
               {execution.sanitized_error_message || 'The request could not be completed.'}
             </Typography>
           </Alert>
@@ -95,22 +101,36 @@ export const ExecutionDetailModal: React.FC<ExecutionDetailModalProps> = ({
             <Table size="small">
               <TableBody>
                 <TableRow>
-                  <TableCell sx={{ color: '#9CA3AF', width: 140 }}>Response Latency</TableCell>
-                  <TableCell sx={{ fontWeight: 700, color: '#10B981' }}>
+                  <TableCell sx={{ color: '#9CA3AF', width: { xs: 110, sm: 140 }, fontSize: { xs: '0.75rem', sm: '0.85rem' } }}>
+                    Response Latency
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 700, color: '#10B981', fontSize: { xs: '0.75rem', sm: '0.85rem' } }}>
                     {formatLatency(execution.response_time_ms)}
                   </TableCell>
                 </TableRow>
                 <TableRow>
-                  <TableCell sx={{ color: '#9CA3AF' }}>Scheduled At</TableCell>
-                  <TableCell>{formatDateTime(execution.scheduled_at)}</TableCell>
+                  <TableCell sx={{ color: '#9CA3AF', fontSize: { xs: '0.75rem', sm: '0.85rem' } }}>
+                    Scheduled At
+                  </TableCell>
+                  <TableCell sx={{ fontSize: { xs: '0.75rem', sm: '0.85rem' } }}>
+                    {formatDateTime(execution.scheduled_at)}
+                  </TableCell>
                 </TableRow>
                 <TableRow>
-                  <TableCell sx={{ color: '#9CA3AF' }}>Started At</TableCell>
-                  <TableCell>{formatDateTime(execution.started_at)}</TableCell>
+                  <TableCell sx={{ color: '#9CA3AF', fontSize: { xs: '0.75rem', sm: '0.85rem' } }}>
+                    Started At
+                  </TableCell>
+                  <TableCell sx={{ fontSize: { xs: '0.75rem', sm: '0.85rem' } }}>
+                    {formatDateTime(execution.started_at)}
+                  </TableCell>
                 </TableRow>
                 <TableRow>
-                  <TableCell sx={{ color: '#9CA3AF' }}>Completed At</TableCell>
-                  <TableCell>{formatDateTime(execution.completed_at)}</TableCell>
+                  <TableCell sx={{ color: '#9CA3AF', fontSize: { xs: '0.75rem', sm: '0.85rem' } }}>
+                    Completed At
+                  </TableCell>
+                  <TableCell sx={{ fontSize: { xs: '0.75rem', sm: '0.85rem' } }}>
+                    {formatDateTime(execution.completed_at)}
+                  </TableCell>
                 </TableRow>
               </TableBody>
             </Table>
@@ -137,7 +157,8 @@ export const ExecutionDetailModal: React.FC<ExecutionDetailModalProps> = ({
                           color: '#9CA3AF',
                           fontFamily: '"JetBrains Mono", monospace',
                           fontSize: '0.75rem',
-                          width: 160,
+                          width: { xs: 110, sm: 160 },
+                          wordBreak: 'break-word',
                         }}
                       >
                         {key}

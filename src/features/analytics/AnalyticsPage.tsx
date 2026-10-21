@@ -12,6 +12,9 @@ import {
   TableHead,
   TableRow,
   CircularProgress,
+  useMediaQuery,
+  useTheme,
+  Stack,
 } from '@mui/material';
 import {
   BarChart,
@@ -36,6 +39,8 @@ import { formatLatency } from '@/lib/formatters';
 const ERROR_COLORS = ['#EF4444', '#F59E0B', '#6366F1', '#EC4899', '#8B5CF6', '#14B8A6'];
 
 export const AnalyticsPage: React.FC = () => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const { endpoints, isLoading: isEndpointsLoading } = useEndpoints();
   const { executions, isLoading: isExecutionsLoading } = useExecutions({ limit: 500 });
 
@@ -100,7 +105,10 @@ export const AnalyticsPage: React.FC = () => {
   return (
     <Box>
       <Box sx={{ mb: 3.5 }}>
-        <Typography variant="h4" sx={{ fontWeight: 800 }}>
+        <Typography
+          variant="h4"
+          sx={{ fontWeight: 800, fontSize: { xs: '1.5rem', sm: '1.85rem', md: '2.125rem' } }}
+        >
           Telemetry & Performance Analytics
         </Typography>
         <Typography variant="body2" color="text.secondary">
@@ -154,14 +162,14 @@ export const AnalyticsPage: React.FC = () => {
 
               <Box sx={{ width: '100%', height: 260 }}>
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={statsPerEndpoint}>
+                  <BarChart data={statsPerEndpoint} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#1F2937" vertical={false} />
                     <XAxis
                       dataKey="name"
                       stroke="#6B7280"
                       fontSize={11}
                       tickLine={false}
-                      tickFormatter={(v) => (v.length > 15 ? `${v.slice(0, 15)}...` : v)}
+                      tickFormatter={(v) => (v.length > (isMobile ? 8 : 15) ? `${v.slice(0, isMobile ? 8 : 15)}...` : v)}
                     />
                     <YAxis
                       stroke="#6B7280"
@@ -204,11 +212,11 @@ export const AnalyticsPage: React.FC = () => {
                         data={errorData}
                         cx="50%"
                         cy="50%"
-                        innerRadius={60}
-                        outerRadius={90}
+                        innerRadius={isMobile ? 40 : 60}
+                        outerRadius={isMobile ? 68 : 90}
                         paddingAngle={5}
                         dataKey="value"
-                        label={({ name, percent }: any) => `${name} (${(percent * 100).toFixed(0)}%)`}
+                        label={isMobile ? false : ({ name, percent }: any) => `${name} (${(percent * 100).toFixed(0)}%)`}
                       >
                         {errorData.map((_, index) => (
                           <Cell
@@ -254,34 +262,85 @@ export const AnalyticsPage: React.FC = () => {
             Endpoint Telemetry Audit Summary
           </Typography>
 
-          <TableContainer>
-            <Table size="small">
-              <TableHead>
-                <TableRow>
-                  <TableCell>Monitored Target</TableCell>
-                  <TableCell>Recorded Samples</TableCell>
-                  <TableCell>Availability (%)</TableCell>
-                  <TableCell>Average Response</TableCell>
-                  <TableCell align="right">Worst-Case Latency</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {statsPerEndpoint.map((row) => (
-                  <TableRow key={row.id} hover>
-                    <TableCell sx={{ fontWeight: 700, color: '#F9FAFB' }}>{row.name}</TableCell>
-                    <TableCell>{row.total}</TableCell>
-                    <TableCell sx={{ color: row.passRate >= 95 ? '#10B981' : '#F59E0B', fontWeight: 700 }}>
-                      {row.passRate}%
-                    </TableCell>
-                    <TableCell>{formatLatency(row.avgLatency)}</TableCell>
-                    <TableCell align="right" sx={{ fontWeight: 600 }}>
-                      {formatLatency(row.maxLatency)}
-                    </TableCell>
+          {isMobile ? (
+            <Stack spacing={1.5}>
+              {statsPerEndpoint.map((row) => (
+                <Box
+                  key={row.id}
+                  sx={{
+                    p: 1.5,
+                    border: '1px solid #1F2937',
+                    borderRadius: 2,
+                    backgroundColor: '#111827',
+                  }}
+                >
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#F9FAFB' }}>
+                      {row.name}
+                    </Typography>
+                    <Typography variant="body2" sx={{ color: row.passRate >= 95 ? '#10B981' : '#F59E0B', fontWeight: 700 }}>
+                      {row.passRate}% pass
+                    </Typography>
+                  </Box>
+                  <Grid container spacing={1}>
+                    <Grid item xs={4}>
+                      <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+                        Samples
+                      </Typography>
+                      <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                        {row.total}
+                      </Typography>
+                    </Grid>
+                    <Grid item xs={4}>
+                      <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+                        Avg Latency
+                      </Typography>
+                      <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                        {formatLatency(row.avgLatency)}
+                      </Typography>
+                    </Grid>
+                    <Grid item xs={4}>
+                      <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+                        Worst Latency
+                      </Typography>
+                      <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                        {formatLatency(row.maxLatency)}
+                      </Typography>
+                    </Grid>
+                  </Grid>
+                </Box>
+              ))}
+            </Stack>
+          ) : (
+            <TableContainer>
+              <Table size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Monitored Target</TableCell>
+                    <TableCell>Recorded Samples</TableCell>
+                    <TableCell>Availability (%)</TableCell>
+                    <TableCell>Average Response</TableCell>
+                    <TableCell align="right">Worst-Case Latency</TableCell>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
+                </TableHead>
+                <TableBody>
+                  {statsPerEndpoint.map((row) => (
+                    <TableRow key={row.id} hover>
+                      <TableCell sx={{ fontWeight: 700, color: '#F9FAFB' }}>{row.name}</TableCell>
+                      <TableCell>{row.total}</TableCell>
+                      <TableCell sx={{ color: row.passRate >= 95 ? '#10B981' : '#F59E0B', fontWeight: 700 }}>
+                        {row.passRate}%
+                      </TableCell>
+                      <TableCell>{formatLatency(row.avgLatency)}</TableCell>
+                      <TableCell align="right" sx={{ fontWeight: 600 }}>
+                        {formatLatency(row.maxLatency)}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          )}
         </CardContent>
       </Card>
     </Box>
