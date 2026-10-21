@@ -35,7 +35,7 @@ If you are setting up a fresh Supabase project:
 ### Verification
 Run this query in the SQL Editor to confirm all components are installed:
 ```sql
-SELECT 
+SELECT
   EXISTS(SELECT 1 FROM information_schema.tables WHERE table_name = 'monitored_endpoints') AS endpoints_table,
   EXISTS(SELECT 1 FROM information_schema.tables WHERE table_name = 'endpoint_executions') AS executions_table,
   EXISTS(SELECT 1 FROM pg_proc WHERE proname = 'claim_due_endpoints') AS claim_rpc,
@@ -72,7 +72,7 @@ The dispatcher function executes health checks, screens for SSRF, and records re
 
 ### Option B: Deploy via Supabase Web Dashboard (Zero CLI)
 
-1. Go to **Edge Functions** in your Supabase Dashboard:  
+1. Go to **Edge Functions** in your Supabase Dashboard:
    `https://supabase.com/dashboard/project/<your-project-ref>/functions`
 2. Click **Create Function**, enter the name **`dispatcher`**.
 3. Copy the complete standalone code from [`supabase/functions/dispatcher/standalone.ts`](supabase/functions/dispatcher/standalone.ts).
@@ -121,9 +121,9 @@ SELECT cron.schedule(
 SELECT jobid, jobname, schedule, active FROM cron.job;
 
 -- Check execution history of the cron jobs
-SELECT jobid, runid, job_pid, status, return_message, start_time, end_time 
-FROM cron.job_run_details 
-ORDER BY start_time DESC 
+SELECT jobid, runid, job_pid, status, return_message, start_time, end_time
+FROM cron.job_run_details
+ORDER BY start_time DESC
 LIMIT 10;
 ```
 
@@ -203,3 +203,16 @@ Visit [http://localhost:4173](http://localhost:4173) in your browser.
 | `Executions not advancing` | Cron job inactive or wrong URL | Run `SELECT * FROM cron.job` and verify `active = true` and the URL matches your project ref. |
 | `SSRF_BLOCKED on internal URL` | IP is in reserved/private range | VigilAPI intentionally blocks localhost, RFC 1918, and metadata IPs (`169.254.169.254`). Use a public internet domain. |
 | `Database approaching storage limit` | High volume of executions | Run `SELECT purge_expired_executions(3);` to shorten retention to 3 days. |
+| `Email rate limit exceeded on signup` | Supabase shared SMTP rate limit (3-4/hr) | Disable "Confirm email" in Supabase Auth settings or configure custom SMTP. |
+
+### 8.1 Email Rate Limit Exceeded on Registration
+
+The error `email rate limit exceeded` occurs because Supabase Free tier projects use a shared SMTP server that enforces a strict rate limit of 3 to 4 confirmation emails per hour across all signups.
+
+#### Recommended Fix: Disable "Confirm email" in Supabase (Takes 10 Seconds)
+When you disable "Confirm email", Supabase creates the user account and signs them in immediately without sending an email verification message:
+
+1. Open your **Supabase Dashboard** -> **Authentication** -> **Providers** -> **Email**.
+2. Scroll down to **Confirm email** and toggle it to **OFF**.
+3. Click **Save** at the bottom.
+4. Go back to VigilAPI and sign up / sign in — authentication will succeed immediately without any email restrictions.

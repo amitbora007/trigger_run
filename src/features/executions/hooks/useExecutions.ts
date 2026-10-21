@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase, isSupabaseConfigured } from '@/lib/supabaseClient';
 import { useAuth } from '@/features/auth/AuthContext';
+import { updateLocalEndpointRun } from '@/features/endpoints/hooks/useEndpoints';
 import type { EndpointExecution, MonitoredEndpoint, ExecutionResult } from '@/types';
 
 // Mock executions fixture for evaluation / sandbox mode
@@ -161,8 +162,16 @@ export function useExecutions(filters?: ExecutionFilterOptions) {
         isTruncated = text.length > 32768;
       } catch (err: any) {
         success = false;
-        errorCategory = err.name === 'TimeoutError' ? 'TIMEOUT' : 'UNKNOWN';
-        sanitizedMessage = err.message || 'Request failed';
+        if (err.name === 'TimeoutError') {
+          errorCategory = 'TIMEOUT';
+          sanitizedMessage = `Request timed out after ${endpoint.request_timeout_ms || 10000}ms`;
+        } else if (err.name === 'TypeError') {
+          errorCategory = 'CONNECTION_REFUSED';
+          sanitizedMessage = 'Browser blocked request (CORS/Network error). Serverless background runner bypasses browser CORS.';
+        } else {
+          errorCategory = 'UNKNOWN';
+          sanitizedMessage = err.message || 'Request failed';
+        }
       }
 
       const completedAt = new Date().toISOString();
@@ -187,11 +196,69 @@ export function useExecutions(filters?: ExecutionFilterOptions) {
         created_at: completedAt,
       };
 
+      const intervalSec = Math.max(300, endpoint.interval_seconds || 300);
+      const nextRunAt = new Date(Date.now() + intervalSec * 1000).toISOString();
+
       if (isDemoMode || !isSupabaseConfigured) {
         localExecutions.unshift(record);
+        updateLocalEndpointRun(endpoint.id, startedAt, nextRunAt);
       } else {
-        await supabase.from('endpoint_executions').insert(record);
+        let rpcSucceeded = false;
+        try {
+          const { error: rpcError } = await supabase.rpc('record_execution_and_reschedule', {
+            p_endpoint_id: endpoint.id,
+            p_user_id: user?.id,
+            p_scheduled_at: scheduledAt,
+            p_started_at: startedAt,
+            p_completed_at: completedAt,
+            p_status_code: statusCode,
+            p_response_time_ms: durationMs,
+            p_success: success,
+            p_error_category: errorCategory,
+            p_sanitized_error_message: sanitizedMessage,
+            p_response_headers: responseHeaders,
+            p_response_body: responseBody,
+            p_is_truncated: isTruncated,
+            p_correlation_id: correlationId,
+          });
+
+          if (!rpcError) {
+            rpcSucceeded = true;
+          } else {
+            console.warn('RPC record_execution_and_reschedule failed:', rpcError);
+          }
+        } catch (e) {
+          console.warn('RPC record_execution_and_reschedule call exception:', e);
+        }
+
+        if (!rpcSucceeded) {
+          await supabase
+            .from('monitored_endpoints')
+            .update({
+              last_run_at: startedAt,
+              next_run_at: nextRunAt,
+              lease_expires_at: null,
+              updated_at: new Date().toISOString(),
+            })
+            .eq('id', endpoint.id);
+
+          try {
+            await supabase.from('endpoint_executions').insert(record);
+          } catch (e) {
+            console.warn('Direct execution insert ignored:', e);
+          }
+        }
       }
+
+      // Synchronously update TanStack Query cache for instant UI feedback
+      queryClient.setQueryData(['endpoints', user?.id], (old: MonitoredEndpoint[] | undefined) => {
+        if (!old) return old;
+        return old.map((ep) =>
+          ep.id === endpoint.id
+            ? { ...ep, last_run_at: startedAt, next_run_at: nextRunAt, updated_at: startedAt }
+            : ep
+        );
+      });
 
       return record;
     },

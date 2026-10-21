@@ -43,6 +43,7 @@ export const EndpointsListPage: React.FC = () => {
   const {
     endpoints,
     isLoading,
+    refetch,
     createEndpoint,
     updateEndpoint,
     toggleEndpoint,
@@ -110,9 +111,15 @@ export const EndpointsListPage: React.FC = () => {
     setTestingId(ep.id);
     try {
       const res = await triggerTestRun(ep);
+      await refetch();
+      const statusText = res.success
+        ? `Status ${res.status_code || 200}`
+        : res.error_category === 'CONNECTION_REFUSED'
+          ? 'Browser CORS/Network (Dispatcher unaffected)'
+          : `Status ${res.status_code || 'Err'}`;
       setToastMsg({
         type: res.success ? 'success' : 'error',
-        text: `Test run completed: Status ${res.status_code || 'Err'} in ${res.response_time_ms}ms`,
+        text: `Test run finished: ${statusText} in ${res.response_time_ms}ms. Schedule updated!`,
       });
     } catch (err: any) {
       setToastMsg({ type: 'error', text: err.message || 'Test execution failed' });

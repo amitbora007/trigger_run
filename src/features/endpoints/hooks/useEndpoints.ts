@@ -61,6 +61,12 @@ const SEED_ENDPOINTS: MonitoredEndpoint[] = [
 // In-memory store for evaluation mode
 let localEndpoints = [...SEED_ENDPOINTS];
 
+export function updateLocalEndpointRun(endpointId: string, startedAt: string, nextRunAt: string) {
+  localEndpoints = localEndpoints.map((ep) =>
+    ep.id === endpointId ? { ...ep, last_run_at: startedAt, next_run_at: nextRunAt, updated_at: startedAt } : ep
+  );
+}
+
 export function useEndpoints() {
   const { user, isDemoMode } = useAuth();
   const queryClient = useQueryClient();
