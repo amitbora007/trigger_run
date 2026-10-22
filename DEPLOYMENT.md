@@ -127,6 +127,23 @@ ORDER BY start_time DESC
 LIMIT 10;
 ```
 
+### Rescheduling the Dispatcher (e.g. Every 3 minutes)
+
+**Option A: Directly from the Dashboard UI**
+1. Click the **"Cadence: ..."** button on the VigilAPI Dashboard (or click the **`pg_cron`** chip in the top navigation bar).
+2. Choose your preferred interval (e.g. *Every 3 minutes (`*/3 * * * *`)* or enter a custom cron expression).
+3. Click **Save Schedule**.
+*(Requires running the migration `supabase/migrations/20240102000000_cron_schedule_rpc.sql` once in the Supabase SQL editor).*
+
+**Option B: Direct SQL via Supabase SQL Editor**
+```sql
+SELECT cron.alter_job(
+  job_id := (SELECT jobid FROM cron.job WHERE jobname = 'vigilapi-minute-dispatcher'),
+  schedule := '*/3 * * * *'
+);
+```
+*(Note: Direct `UPDATE cron.job` returns `ERROR: 42501 permission denied` because `cron.job` is owned by `postgres`. Always use `cron.alter_job` or our SECURITY DEFINER RPC).*
+
 ---
 
 ## 6. Step 4: Frontend Web Application Deployment

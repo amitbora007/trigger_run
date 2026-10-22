@@ -15,6 +15,7 @@ import {
   ListItemText,
   Chip,
   Button,
+  Tooltip,
   useMediaQuery,
   useTheme,
 } from '@mui/material';
@@ -27,6 +28,8 @@ import LogoutIcon from '@mui/icons-material/Logout';
 import FlashOnIcon from '@mui/icons-material/FlashOn';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import { useAuth } from '@/features/auth/AuthContext';
+import { CronScheduleModal } from '@/features/dashboard/components/CronScheduleModal';
+import { useCronSchedule } from '@/features/dashboard/hooks/useCronSchedule';
 
 const DRAWER_WIDTH = 260;
 
@@ -44,6 +47,8 @@ export const AppLayout: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, signOut, isDemoMode } = useAuth();
+  const [cronModalOpen, setCronModalOpen] = useState(false);
+  const { humanLabel: cronCadenceLabel } = useCronSchedule();
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
@@ -127,21 +132,37 @@ export const AppLayout: React.FC = () => {
       {/* Scheduler Status Card */}
       <Box sx={{ p: 2 }}>
         <Box
+          onClick={() => setCronModalOpen(true)}
           sx={{
             p: 1.5,
             borderRadius: 2,
             backgroundColor: 'rgba(16, 185, 129, 0.05)',
             border: '1px solid rgba(16, 185, 129, 0.2)',
+            cursor: 'pointer',
+            transition: 'all 0.15s ease',
+            '&:hover': {
+              borderColor: '#10B981',
+              backgroundColor: 'rgba(16, 185, 129, 0.1)',
+            },
           }}
         >
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
-            <CheckCircleIcon sx={{ color: '#10B981', fontSize: 16 }} />
-            <Typography variant="caption" sx={{ fontWeight: 700, color: '#10B981' }}>
-              pg_cron Scheduled
-            </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 0.5 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <CheckCircleIcon sx={{ color: '#10B981', fontSize: 16 }} />
+              <Typography variant="caption" sx={{ fontWeight: 700, color: '#10B981' }}>
+                pg_cron Cadence
+              </Typography>
+            </Box>
+            <Chip
+              label={cronCadenceLabel}
+              size="small"
+              variant="outlined"
+              color="success"
+              sx={{ height: 18, fontSize: '0.65rem', fontWeight: 600 }}
+            />
           </Box>
           <Typography variant="caption" sx={{ color: '#9CA3AF', display: 'block', fontSize: '0.75rem' }}>
-            Running 100% serverless on Supabase Free Tier. Safe to close browser.
+            Click to view or reschedule dispatcher heartbeat.
           </Typography>
         </Box>
       </Box>
@@ -217,13 +238,16 @@ export const AppLayout: React.FC = () => {
                 sx={{ height: 24, fontSize: '0.75rem' }}
               />
             )}
-            <Chip
-              label="pg_cron: Active"
-              size="small"
-              color="success"
-              variant="filled"
-              sx={{ display: { xs: 'none', sm: 'inline-flex' } }}
-            />
+            <Tooltip title="Click to view or reschedule pg_cron dispatcher cadence">
+              <Chip
+                label={`pg_cron: ${cronCadenceLabel}`}
+                size="small"
+                color="success"
+                variant="filled"
+                onClick={() => setCronModalOpen(true)}
+                sx={{ display: { xs: 'none', sm: 'inline-flex' }, cursor: 'pointer' }}
+              />
+            </Tooltip>
           </Box>
         </Toolbar>
       </AppBar>
@@ -284,6 +308,8 @@ export const AppLayout: React.FC = () => {
       >
         <Outlet />
       </Box>
+
+      <CronScheduleModal open={cronModalOpen} onClose={() => setCronModalOpen(false)} />
     </Box>
   );
 };

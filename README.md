@@ -218,6 +218,9 @@ SELECT cron.schedule(
 );
 ```
 
+> [!TIP]
+> **Rescheduling the Dispatcher**: You can change the cron cadence anytime directly from the **VigilAPI Dashboard** using the **"Cadence"** button or topbar `pg_cron` chip (e.g., switch between 1m, 2m, 3m, 5m, 10m). Alternatively, run `SELECT cron.alter_job(job_id := (SELECT jobid FROM cron.job WHERE jobname = 'vigilapi-minute-dispatcher'), schedule := '*/3 * * * *');` in the Supabase SQL editor.
+
 ---
 
 ## Smoke-Test Verification Procedure

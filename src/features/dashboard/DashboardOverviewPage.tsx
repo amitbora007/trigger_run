@@ -25,6 +25,7 @@ import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import HistoryToggleOffIcon from '@mui/icons-material/HistoryToggleOff';
 import AddIcon from '@mui/icons-material/Add';
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
+import ScheduleIcon from '@mui/icons-material/Schedule';
 import {
   AreaChart,
   Area,
@@ -41,6 +42,8 @@ import { useExecutions } from '../executions/hooks/useExecutions';
 import { MetricCard } from '@/components/common/MetricCard';
 import { StatusChip } from '@/components/common/StatusChip';
 import { formatLatency, formatRelativeTime } from '@/lib/formatters';
+import { CronScheduleModal } from './components/CronScheduleModal';
+import { useCronSchedule } from './hooks/useCronSchedule';
 
 export const DashboardOverviewPage: React.FC = () => {
   const navigate = useNavigate();
@@ -48,6 +51,8 @@ export const DashboardOverviewPage: React.FC = () => {
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const { endpoints, isLoading: isEndpointsLoading } = useEndpoints();
   const { executions, isLoading: isExecutionsLoading } = useExecutions({ limit: 100 });
+  const [cronModalOpen, setCronModalOpen] = React.useState(false);
+  const { humanLabel: cronCadenceLabel } = useCronSchedule();
 
   const activeEndpoints = endpoints.filter((e) => e.is_enabled);
   const pausedEndpoints = endpoints.filter((e) => !e.is_enabled);
@@ -114,14 +119,25 @@ export const DashboardOverviewPage: React.FC = () => {
           </Typography>
         </Box>
 
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={() => navigate('/endpoints')}
-          sx={{ width: { xs: '100%', sm: 'auto' }, minHeight: 40 }}
-        >
-          Add Monitored API
-        </Button>
+        <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap', width: { xs: '100%', sm: 'auto' } }}>
+          <Button
+            variant="outlined"
+            startIcon={<ScheduleIcon />}
+            onClick={() => setCronModalOpen(true)}
+            sx={{ width: { xs: '100%', sm: 'auto' }, minHeight: 40 }}
+          >
+            Cadence: {cronCadenceLabel}
+          </Button>
+
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={() => navigate('/endpoints')}
+            sx={{ width: { xs: '100%', sm: 'auto' }, minHeight: 40 }}
+          >
+            Add Monitored API
+          </Button>
+        </Box>
       </Box>
 
       {/* 4 Metric Cards */}
@@ -385,6 +401,8 @@ export const DashboardOverviewPage: React.FC = () => {
           )}
         </CardContent>
       </Card>
+
+      <CronScheduleModal open={cronModalOpen} onClose={() => setCronModalOpen(false)} />
     </Box>
   );
 };
