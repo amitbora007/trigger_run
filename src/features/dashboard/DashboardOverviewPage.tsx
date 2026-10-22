@@ -107,7 +107,7 @@ export const DashboardOverviewPage: React.FC = () => {
             variant="h4"
             sx={{ fontWeight: 800, fontSize: { xs: '1.5rem', sm: '1.85rem', md: '2.125rem' } }}
           >
-            Fleet Reliability Dashboard
+            VigilAPI Overview
           </Typography>
           <Typography variant="body2" color="text.secondary">
             Autonomous serverless monitoring health and performance metrics.
