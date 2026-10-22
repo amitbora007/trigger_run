@@ -7,7 +7,7 @@
 
 Imagine you own an online store or a SaaS application. If your payment system or backend server goes down at 3:00 AM, how do you find out? Usually, you only find out when angry customers email you.
 
-**VigilAPI** (the `trigger_run` codebase) is an **Autonomous API Watchdog**. It acts like a robotic security guard that knocks on your server's door every 5 or 10 minutes:
+**VigilAPI** (the `vigilapi` codebase) is an **Autonomous API Watchdog**. It acts like a robotic security guard that knocks on your server's door every 5 or 10 minutes:
 1. It sends an HTTP request (like a health check ping) to your API endpoint.
 2. It checks: *Did it respond? Did it return HTTP 200 OK or an error? How many milliseconds did it take?*
 3. It records the test results and displays live uptime metrics, charts, and error diagnostic logs on a web dashboard.
@@ -60,7 +60,7 @@ flowchart TD
 ### Pillar 1: The Face (Frontend Web Dashboard)
 - **What it is**: The visual dashboard where you log in, add monitored URLs, set monitoring cadences (5m, 10m, 1h), see latency graphs, and review incident alerts.
 - **Technology**: Built with React, TypeScript, Material UI (MUI), and Recharts.
-- **Where it lives**: Hosted for free on **GitHub Pages** (`https://amitbora007.github.io/trigger_run/`).
+- **Where it lives**: Hosted for free on **GitHub Pages** (`https://amitbora007.github.io/vigilapi/`).
 - **How it works**: Whenever you open the page in your phone or browser, it connects securely to Supabase using public API keys and your login credentials to fetch your real-time data.
 
 ---
@@ -174,7 +174,7 @@ Let's follow what happens from start to finish:
    - The dispatcher writes a row into `endpoint_executions`: Status `200`, Latency `120ms`, Result `Success`.
    - The dispatcher updates the endpoint: `last_run_at = 14:00:00`, `next_run_at = 14:10:00`.
 6. **You check your phone**:
-   - You open `https://amitbora007.github.io/trigger_run/`.
+   - You open `https://amitbora007.github.io/vigilapi/`.
    - The dashboard shows a green status badge, your 120ms latency chart point, and notes that the next check will run at 14:10:00.
 7. **Zero effort required**:
    - Your laptop was in your backpack, your phone was locked, and no server had to be managed or paid for.

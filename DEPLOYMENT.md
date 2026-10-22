@@ -134,7 +134,7 @@ LIMIT 10;
 ### Option A: Deploy to Vercel
 
 1. Push your repository to GitHub.
-2. In the [Vercel Dashboard](https://vercel.com/new), import your GitHub repository (`trigger_run`).
+2. In the [Vercel Dashboard](https://vercel.com/new), import your GitHub repository (`vigilapi`).
 3. Set the Environment Variables:
    - `VITE_SUPABASE_URL`: `https://<your-project-ref>.supabase.co`
    - `VITE_SUPABASE_ANON_KEY`: `<your-supabase-anon-key>`

@@ -2,11 +2,11 @@
 
 ![VigilAPI Architecture](https://img.shields.io/badge/Architecture-Serverless%20Supabase-emerald)
 ![TypeScript](https://img.shields.io/badge/TypeScript-Strict-blue)
-![CI/CD](https://github.com/amitbora007/trigger_run/actions/workflows/ci.yml/badge.svg)
-![Deployment](https://github.com/amitbora007/trigger_run/actions/workflows/deploy.yml/badge.svg)
+![CI/CD](https://github.com/amitbora007/vigilapi/actions/workflows/ci.yml/badge.svg)
+![Deployment](https://github.com/amitbora007/vigilapi/actions/workflows/deploy.yml/badge.svg)
 ![Live App](https://img.shields.io/badge/Live%20App-GitHub%20Pages-brightgreen)
 
-**Live Web Application**: [https://amitbora007.github.io/trigger_run/](https://amitbora007.github.io/trigger_run/)
+**Live Web Application**: [https://amitbora007.github.io/vigilapi/](https://amitbora007.github.io/vigilapi/)
 
 VigilAPI is a production-minded, multi-tenant HTTP endpoint health monitoring web application built on **React, TypeScript, Supabase PostgreSQL, Supabase Cron (`pg_cron`), and Supabase Edge Functions**.
 
