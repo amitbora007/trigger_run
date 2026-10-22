@@ -197,11 +197,14 @@ export const DashboardOverviewPage: React.FC = () => {
                       />
                       <Tooltip
                         contentStyle={{
-                          backgroundColor: '#111827',
-                          border: '1px solid #1F2937',
+                          backgroundColor: '#1F2937',
+                          border: '1px solid #374151',
                           borderRadius: 8,
-                          color: '#F9FAFB',
+                          boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.5)',
                         }}
+                        itemStyle={{ color: '#F9FAFB', fontSize: '0.875rem' }}
+                        labelStyle={{ color: '#F9FAFB', fontWeight: 700, marginBottom: 4 }}
+                        formatter={(v: any) => [`${v}ms`, 'Latency']}
                       />
                       <Area
                         type="monotone"
@@ -257,11 +260,14 @@ export const DashboardOverviewPage: React.FC = () => {
                     <YAxis stroke="#6B7280" fontSize={11} tickLine={false} allowDecimals={false} />
                     <Tooltip
                       contentStyle={{
-                        backgroundColor: '#111827',
-                        border: '1px solid #1F2937',
+                        backgroundColor: '#1F2937',
+                        border: '1px solid #374151',
                         borderRadius: 8,
-                        color: '#F9FAFB',
+                        boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.5)',
                       }}
+                      itemStyle={{ color: '#F9FAFB', fontSize: '0.875rem' }}
+                      labelStyle={{ color: '#F9FAFB', fontWeight: 700, marginBottom: 4 }}
+                      formatter={(v: any) => [`${v} runs`, 'Volume']}
                     />
                     <Bar dataKey="count" radius={[4, 4, 0, 0]} />
                   </BarChart>

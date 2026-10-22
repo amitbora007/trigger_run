@@ -179,11 +179,14 @@ export const AnalyticsPage: React.FC = () => {
                     />
                     <Tooltip
                       contentStyle={{
-                        backgroundColor: '#111827',
-                        border: '1px solid #1F2937',
+                        backgroundColor: '#1F2937',
+                        border: '1px solid #374151',
                         borderRadius: 8,
-                        color: '#F9FAFB',
+                        boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.5)',
                       }}
+                      itemStyle={{ color: '#F9FAFB', fontSize: '0.875rem' }}
+                      labelStyle={{ color: '#F9FAFB', fontWeight: 700, marginBottom: 4 }}
+                      formatter={(v: any) => [`${v}ms`, 'Average Latency']}
                     />
                     <Bar dataKey="avgLatency" fill="#6366F1" radius={[4, 4, 0, 0]} />
                   </BarChart>
@@ -227,11 +230,14 @@ export const AnalyticsPage: React.FC = () => {
                       </Pie>
                       <Tooltip
                         contentStyle={{
-                          backgroundColor: '#111827',
-                          border: '1px solid #1F2937',
+                          backgroundColor: '#1F2937',
+                          border: '1px solid #374151',
                           borderRadius: 8,
-                          color: '#F9FAFB',
+                          boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.5)',
                         }}
+                        itemStyle={{ color: '#F9FAFB', fontWeight: 600, fontSize: '0.875rem' }}
+                        labelStyle={{ color: '#F9FAFB', fontWeight: 700, marginBottom: 4 }}
+                        formatter={(value: any, name: any) => [`${value} failure${value > 1 ? 's' : ''}`, `${name}`]}
                       />
                     </PieChart>
                   </ResponsiveContainer>
