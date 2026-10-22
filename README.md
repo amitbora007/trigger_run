@@ -12,6 +12,10 @@ VigilAPI is a production-minded, multi-tenant HTTP endpoint health monitoring we
 
 It runs scheduled HTTP health checks **100% independently of client sessions**. Users can close their browser, log out, or shut down their computer without interrupting monitoring schedules.
 
+<p align="center">
+  <img src="docs/images/dashboard-overview.png" alt="VigilAPI Production Fleet Dashboard" width="100%" />
+</p>
+
 ---
 
 ## Key Features
