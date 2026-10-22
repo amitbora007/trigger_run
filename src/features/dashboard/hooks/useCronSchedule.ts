@@ -26,7 +26,6 @@ export const CRON_PRESETS: CronPreset[] = [
     label: 'Every 3 minutes',
     schedule: '*/3 * * * *',
     description: 'Runs 480 times per day (~14.4k/mo). Optimal balance of speed & quota efficiency.',
-    tag: 'Recommended',
   },
   {
     label: 'Every 4 minutes',

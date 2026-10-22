@@ -278,7 +278,8 @@ END;
 $$;
 
 -- 7.4 System Diagnostic View for Monitoring Dispatcher Health
-CREATE OR REPLACE VIEW public.v_system_health_watchdog AS
+CREATE OR REPLACE VIEW public.v_system_health_watchdog
+WITH (security_invoker = true) AS
 SELECT
   timezone('utc'::text, now()) AS current_time_utc,
   (SELECT MAX(created_at) FROM public.endpoint_executions) AS last_execution_time,

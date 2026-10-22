@@ -130,7 +130,8 @@ An administrative diagnostic agent capable of surveying the health of the monito
 
 ### 6.2 Diagnostic Query
 ```sql
-CREATE OR REPLACE VIEW v_system_health_watchdog AS
+CREATE OR REPLACE VIEW v_system_health_watchdog
+WITH (security_invoker = true) AS
 SELECT
   NOW() AS current_time,
   (SELECT MAX(created_at) FROM endpoint_executions) AS last_execution_time,
