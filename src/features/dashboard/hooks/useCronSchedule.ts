@@ -29,6 +29,11 @@ export const CRON_PRESETS: CronPreset[] = [
     tag: 'Recommended',
   },
   {
+    label: 'Every 4 minutes',
+    schedule: '*/4 * * * *',
+    description: 'Runs 360 times per day (~10.8k/mo). Smooth custom monitoring cadence.',
+  },
+  {
     label: 'Every 5 minutes',
     schedule: '*/5 * * * *',
     description: 'Runs 288 times per day (~8.6k/mo). Excellent for production fleets on free tiers.',
@@ -46,15 +51,19 @@ export const CRON_PRESETS: CronPreset[] = [
 ];
 
 export function getHumanCronLabel(schedule: string): string {
-  const match = CRON_PRESETS.find((p) => p.schedule === schedule.trim());
+  const trimmed = schedule ? schedule.trim() : '';
+  const match = CRON_PRESETS.find((p) => p.schedule === trimmed);
   if (match) return match.label;
-  if (schedule === '* * * * *') return 'Every 1 min';
-  if (schedule === '*/2 * * * *') return 'Every 2 min';
-  if (schedule === '*/3 * * * *') return 'Every 3 min';
-  if (schedule === '*/5 * * * *') return 'Every 5 min';
-  if (schedule === '*/10 * * * *') return 'Every 10 min';
-  if (schedule === '*/15 * * * *') return 'Every 15 min';
-  return `Cron: ${schedule}`;
+  if (trimmed === '* * * * *') return 'Every 1 minute';
+
+  // Dynamic match for any */N * * * * expression
+  const stepMatch = trimmed.match(/^\*\/(\d+)\s+\*\s+\*\s+\*\s+\*$/);
+  if (stepMatch) {
+    const mins = stepMatch[1];
+    return `Every ${mins} minute${mins === '1' ? '' : 's'}`;
+  }
+
+  return `Cron: ${trimmed}`;
 }
 
 const STORAGE_KEY = 'vigilapi_cron_schedule';

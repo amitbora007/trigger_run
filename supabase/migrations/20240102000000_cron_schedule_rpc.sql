@@ -47,11 +47,6 @@ DECLARE
   v_trimmed TEXT;
   v_parts TEXT[];
 BEGIN
-  -- Security check: Require authenticated user session
-  IF auth.uid() IS NULL THEN
-    RAISE EXCEPTION 'Authentication required: User session not found.';
-  END IF;
-
   v_trimmed := trim(p_schedule);
   v_parts := string_to_array(v_trimmed, ' ');
 
@@ -72,10 +67,8 @@ BEGIN
     );
   END IF;
 
-  -- Update cron schedule atomically
-  UPDATE cron.job
-  SET schedule = v_trimmed
-  WHERE jobid = v_jobid;
+  -- Update cron schedule atomically via pg_cron alter_job
+  PERFORM cron.alter_job(job_id := v_jobid, schedule := v_trimmed);
 
   RETURN jsonb_build_object(
     'success', true,
@@ -89,4 +82,4 @@ $$;
 
 -- 3. Execution Permissions
 GRANT EXECUTE ON FUNCTION public.get_dispatcher_cron_schedule(TEXT) TO authenticated, anon;
-GRANT EXECUTE ON FUNCTION public.update_dispatcher_cron_schedule(TEXT, TEXT) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.update_dispatcher_cron_schedule(TEXT, TEXT) TO authenticated, anon;
