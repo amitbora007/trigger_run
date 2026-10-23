@@ -1,5 +1,5 @@
 -- ==============================================================================
--- VigilAPI: Database Migration 20261021120000_init_schema.sql
+-- VigilAPI: Database Migration 20240101000000_init_schema.sql
 -- Multi-tenant API Monitoring Architecture with Atomic Leases & Bounded Catch-Up
 -- ==============================================================================
 

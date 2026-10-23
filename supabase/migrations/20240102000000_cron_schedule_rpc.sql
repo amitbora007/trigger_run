@@ -1,5 +1,5 @@
 -- ==============================================================================
--- VigilAPI: Database Migration 20261022120000_cron_schedule_rpc.sql
+-- VigilAPI: Database Migration 20240102000000_cron_schedule_rpc.sql
 -- Exposes SECURITY DEFINER RPCs for reading and rescheduling pg_cron dispatcher
 -- ==============================================================================
 
