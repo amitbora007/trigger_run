@@ -28,6 +28,9 @@ jobs:
         run: npm run typecheck
 
       - name: Run Vitest Suite (Unit & Component Tests)
+        env:
+          VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL || 'https://ejeugpfpstgfumbkvjon.supabase.co' }}
+          VITE_SUPABASE_ANON_KEY: ${{ vars.VITE_SUPABASE_ANON_KEY || 'placeholder' }}
         run: npm test
 
       - name: Setup Deno Environment

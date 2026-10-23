@@ -27,6 +27,10 @@ export default defineConfig({
     globals: true,
     environment: 'jsdom',
     setupFiles: ['./tests/setup.ts'],
+    env: {
+      VITE_SUPABASE_URL: 'https://ejeugpfpstgfumbkvjon.supabase.co',
+      VITE_SUPABASE_ANON_KEY: 'test-anon-key-vitest',
+    },
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
