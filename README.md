@@ -177,23 +177,35 @@ Follow these steps to deploy VigilAPI to a free Supabase project:
 2. Paste the contents of [`supabase/migrations/20240101000000_init_schema.sql`](supabase/migrations/20240101000000_init_schema.sql) and run it.
 3. Apply subsequent incremental migrations in order (`20240102000000_cron_schedule_rpc.sql`, `20240103000000_security_invoker_view.sql`, and `20261023110000_add_email_notifications.sql`) or push via Supabase CLI (`npx supabase db push`).
 
-### Step 3: Deploy the Edge Function
-Using the Supabase CLI:
+### Step 3: Deploy the Edge Function (`dispatcher`)
+
+The dispatcher function executes scheduled health checks, enforces SSRF protections, and dispatches Resend incident alert emails.
+
+#### Option A: Web Dashboard (Fastest, Zero CLI, 30 Seconds)
+1. In your Supabase Dashboard, open **Edge Functions**: `https://supabase.com/dashboard/project/<your-project-id>/functions`.
+2. Click **Create Function** (or open existing `dispatcher`).
+3. Replace the code with the complete standalone script from [`supabase/functions/dispatcher/standalone.ts`](supabase/functions/dispatcher/standalone.ts) and click **Deploy**.
+4. In **Edge Functions -> Manage Secrets**, set:
+   - `SCHEDULER_SECRET` = `generate-a-random-32-char-secret`
+   - `RESEND_API_KEY` = `re_your_resend_api_key`
+   - `RESEND_FROM_EMAIL` = `VigilAPI Alerts <onboarding@resend.dev>` *(Optional)*
+
+#### Option B: Using the Supabase CLI
 ```bash
 # Login to Supabase CLI
 npx supabase login
 
-# Link your remote project
-npx supabase link --project-ref your-project-id
-
-# Set Edge Function secret for scheduler invocation and Resend email alerts
-npx supabase secrets set SCHEDULER_SECRET=generate-a-random-32-char-secret
-npx supabase secrets set RESEND_API_KEY=re_your_resend_api_key
-npx supabase secrets set CONTACT_EMAIL_FROM="VigilAPI <onboarding@resend.dev>"
+# Set Edge Function secrets
+npx supabase secrets set SCHEDULER_SECRET=generate-a-random-32-char-secret --project-ref your-project-id
+npx supabase secrets set RESEND_API_KEY=re_your_resend_api_key --project-ref your-project-id
+npx supabase secrets set RESEND_FROM_EMAIL="VigilAPI Alerts <onboarding@resend.dev>" --project-ref your-project-id
 
 # Deploy the dispatcher function
-npx supabase functions deploy dispatcher --no-verify-jwt
+npx supabase functions deploy dispatcher --project-ref your-project-id --no-verify-jwt
 ```
+
+#### Option C: Automated CI/CD on Every Git Push (GitHub Actions)
+Add `SUPABASE_ACCESS_TOKEN` to your GitHub Repository Secrets (**Settings $\rightarrow$ Secrets and variables $\rightarrow$ Actions**). Every push to `main` will automatically build and deploy the latest `dispatcher` code to Supabase alongside your GitHub Pages frontend.
 
 ### Step 4: Register the pg_cron Recurring Job
 In the Supabase SQL Editor, store your configuration and schedule the cron:

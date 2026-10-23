@@ -48,37 +48,55 @@ All columns should return `true`.
 
 ## 4. Step 2: Edge Function Deployment (`dispatcher`)
 
-The dispatcher function executes health checks, screens for SSRF, and records results.
+The dispatcher function executes health checks, screens for SSRF, dispatches Resend failure alerts, and records execution results.
 
-### Option A: Deploy via Supabase CLI (Recommended)
+> [!NOTE]
+> **Why Code Wasn't Auto-Deployed by the Supabase GitHub Integration**: The Supabase GitHub App integration only tracks and applies database migrations (`supabase/migrations/`). Edge Functions are deployed via the Supabase Web Dashboard, the Supabase CLI, or automated GitHub Actions CI/CD.
 
-1. Obtain a Personal Access Token from [Supabase Account Tokens](https://supabase.com/dashboard/account/tokens).
+### Option A: Via Supabase Web Dashboard (Fastest, Zero CLI, 30 Seconds)
+
+1. Open **Edge Functions** in your Supabase Dashboard:
+   `https://supabase.com/dashboard/project/<your-project-ref>/functions`
+2. If already created, click on **`dispatcher`**; otherwise click **Create Function** and name it **`dispatcher`**.
+3. In the web code editor, select all and replace the contents with the complete, self-contained standalone script from:
+   [`supabase/functions/dispatcher/standalone.ts`](supabase/functions/dispatcher/standalone.ts)
+   *(This file bundles all dependencies, type definitions, SSRF defenses, and the `handleFailureNotification` Resend alerting engine).*
+4. Click **Deploy**.
+5. In **Edge Functions -> Manage Secrets** (or **Project Settings -> Edge Functions**), add:
+   - `SCHEDULER_SECRET` = `vigilapi_secret_key_2026` *(Used by pg_cron to authorize dispatcher batch runs)*
+   - `RESEND_API_KEY` = `re_your_resend_api_key` *(Used to send failure email notifications)*
+   - `RESEND_FROM_EMAIL` = `VigilAPI Alerts <onboarding@resend.dev>` *(Optional; defaults to onboarding@resend.dev)*
+
+### Option B: Deploy via Supabase CLI
+
+1. Obtain an Access Token from [Supabase Account Tokens](https://supabase.com/dashboard/account/tokens).
 2. Log into the CLI:
    ```bash
    npx supabase login --token <your-personal-access-token>
    ```
-3. Link your project:
-   ```bash
-   npx supabase link --project-ref <your-project-ref>
-   ```
-4. Set the scheduler secret:
+3. Set your Edge Function secrets:
    ```bash
    npx supabase secrets set SCHEDULER_SECRET=vigilapi_secret_key_2026 --project-ref <your-project-ref>
+   npx supabase secrets set RESEND_API_KEY=re_your_resend_api_key --project-ref <your-project-ref>
+   npx supabase secrets set RESEND_FROM_EMAIL="VigilAPI Alerts <onboarding@resend.dev>" --project-ref <your-project-ref>
    ```
-5. Deploy the Edge Function:
+4. Deploy the Edge Function:
    ```bash
    npx supabase functions deploy dispatcher --project-ref <your-project-ref> --no-verify-jwt
    ```
 
-### Option B: Deploy via Supabase Web Dashboard (Zero CLI)
+### Option C: Automated CI/CD Deployment via GitHub Actions (Every Git Push)
 
-1. Go to **Edge Functions** in your Supabase Dashboard:
-   `https://supabase.com/dashboard/project/<your-project-ref>/functions`
-2. Click **Create Function**, enter the name **`dispatcher`**.
-3. Copy the complete standalone code from [`supabase/functions/dispatcher/standalone.ts`](supabase/functions/dispatcher/standalone.ts).
-4. Paste into the web editor, save, and deploy.
-5. In **Edge Functions -> Secrets**, add:
-   - `SCHEDULER_SECRET` = `vigilapi_secret_key_2026`
+The repository includes a ready-to-use GitHub Actions workflow (`.github/workflows/deploy.yml`) that automatically deploys the latest `dispatcher` code whenever you push to `main`.
+
+To enable automatic Edge Function deployments:
+1. Generate an Access Token from [Supabase Account Tokens](https://supabase.com/dashboard/account/tokens).
+2. Go to your GitHub repository: **Settings $\rightarrow$ Secrets and variables $\rightarrow$ Actions**.
+3. Under **Repository secrets**, click **New repository secret**:
+   - **Name**: `SUPABASE_ACCESS_TOKEN`
+   - **Value**: *(Paste your Supabase access token)*
+4. *(Optional)* Under **Repository variables**, verify `SUPABASE_PROJECT_ID` is set to your project reference (defaults to `ejeugpfpstgfumbkvjon`).
+5. On every subsequent `git push origin main`, GitHub Actions will automatically bundle and deploy the latest `dispatcher` function alongside your GitHub Pages frontend.
 
 ---
 

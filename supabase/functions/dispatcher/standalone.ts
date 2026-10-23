@@ -690,7 +690,7 @@ async function handleFailureNotification(
         Scheduled health check failure detected for your monitored endpoint.
       </p>
     </div>
-    
+
     <div style="padding: 28px;">
       <table style="width: 100%; border-collapse: collapse; margin-bottom: 24px; font-size: 14px;">
         <tr>
