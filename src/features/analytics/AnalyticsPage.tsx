@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Box,
   Typography,
@@ -12,6 +12,7 @@ import {
   TableHead,
   TableRow,
   CircularProgress,
+  TablePagination,
   useMediaQuery,
   useTheme,
   Stack,
@@ -43,6 +44,8 @@ export const AnalyticsPage: React.FC = () => {
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const { endpoints, isLoading: isEndpointsLoading } = useEndpoints();
   const { executions, isLoading: isExecutionsLoading } = useExecutions({ limit: 500 });
+  const [page, setPage] = useState<number>(0);
+  const [rowsPerPage, setRowsPerPage] = useState<number>(5);
 
 
   // Calculate Percentiles
@@ -91,6 +94,12 @@ export const AnalyticsPage: React.FC = () => {
       maxLatency: max,
     };
   });
+
+  const safePage = Math.min(page, Math.max(0, Math.ceil(statsPerEndpoint.length / rowsPerPage) - 1));
+  const paginatedStats = statsPerEndpoint.slice(
+    safePage * rowsPerPage,
+    safePage * rowsPerPage + rowsPerPage
+  );
 
   const isLoading = isEndpointsLoading || isExecutionsLoading;
 
@@ -270,7 +279,7 @@ export const AnalyticsPage: React.FC = () => {
 
           {isMobile ? (
             <Stack spacing={1.5}>
-              {statsPerEndpoint.map((row) => (
+              {paginatedStats.map((row) => (
                 <Box
                   key={row.id}
                   sx={{
@@ -318,7 +327,7 @@ export const AnalyticsPage: React.FC = () => {
               ))}
             </Stack>
           ) : (
-            <TableContainer>
+            <TableContainer sx={{ overflowX: 'auto' }}>
               <Table size="small">
                 <TableHead>
                   <TableRow>
@@ -330,7 +339,7 @@ export const AnalyticsPage: React.FC = () => {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {statsPerEndpoint.map((row) => (
+                  {paginatedStats.map((row) => (
                     <TableRow key={row.id} hover>
                       <TableCell sx={{ fontWeight: 700, color: '#F9FAFB' }}>{row.name}</TableCell>
                       <TableCell>{row.total}</TableCell>
@@ -346,6 +355,49 @@ export const AnalyticsPage: React.FC = () => {
                 </TableBody>
               </Table>
             </TableContainer>
+          )}
+
+          {statsPerEndpoint.length > 0 && (
+            <TablePagination
+              rowsPerPageOptions={[5, 10, 25, 50]}
+              component="div"
+              count={statsPerEndpoint.length}
+              rowsPerPage={rowsPerPage}
+              page={safePage}
+              onPageChange={(_, newPage) => setPage(newPage)}
+              onRowsPerPageChange={(e) => {
+                setRowsPerPage(parseInt(e.target.value, 10));
+                setPage(0);
+              }}
+              sx={{
+                borderTop: '1px solid #1F2937',
+                color: '#9CA3AF',
+                mt: 1.5,
+                '.MuiTablePagination-toolbar': {
+                  flexWrap: 'wrap',
+                  justifyContent: { xs: 'center', sm: 'flex-end' },
+                  gap: { xs: 0.5, sm: 0 },
+                  px: { xs: 1, sm: 2 },
+                  minHeight: { xs: 48, sm: 52 },
+                },
+                '.MuiTablePagination-selectLabel': {
+                  fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                  color: '#9CA3AF',
+                },
+                '.MuiTablePagination-select': {
+                  fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                  color: '#F9FAFB',
+                },
+                '.MuiTablePagination-displayedRows': {
+                  fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                  color: '#9CA3AF',
+                },
+                '.MuiTablePagination-actions': {
+                  ml: { xs: 0.5, sm: 1.5 },
+                  color: '#9CA3AF',
+                },
+              }}
+            />
           )}
         </CardContent>
       </Card>

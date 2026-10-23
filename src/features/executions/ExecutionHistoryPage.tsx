@@ -20,6 +20,7 @@ import {
   Chip,
   Stack,
   Divider,
+  TablePagination,
   useMediaQuery,
   useTheme,
 } from '@mui/material';
@@ -38,6 +39,8 @@ export const ExecutionHistoryPage: React.FC = () => {
   const [selectedEndpointId, setSelectedEndpointId] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<'all' | 'success' | 'failure'>('all');
   const [activeExecution, setActiveExecution] = useState<EndpointExecution | null>(null);
+  const [page, setPage] = useState<number>(0);
+  const [rowsPerPage, setRowsPerPage] = useState<number>(10);
 
   const { executions, isLoading } = useExecutions({
     endpointId: selectedEndpointId === 'all' ? undefined : selectedEndpointId,
@@ -45,6 +48,22 @@ export const ExecutionHistoryPage: React.FC = () => {
   });
 
   const endpointMap = new Map(endpoints.map((ep) => [ep.id, ep]));
+
+  const handleStatusFilterChange = (val: 'all' | 'success' | 'failure') => {
+    setStatusFilter(val);
+    setPage(0);
+  };
+
+  const handleEndpointFilterChange = (val: string) => {
+    setSelectedEndpointId(val);
+    setPage(0);
+  };
+
+  const safePage = Math.min(page, Math.max(0, Math.ceil(executions.length / rowsPerPage) - 1));
+  const paginatedExecutions = executions.slice(
+    safePage * rowsPerPage,
+    safePage * rowsPerPage + rowsPerPage
+  );
 
   return (
     <Box>
@@ -73,7 +92,7 @@ export const ExecutionHistoryPage: React.FC = () => {
         >
           <Tabs
             value={statusFilter}
-            onChange={(_, val) => setStatusFilter(val)}
+            onChange={(_, val) => handleStatusFilterChange(val)}
             variant="scrollable"
             scrollButtons="auto"
             allowScrollButtonsMobile
@@ -89,7 +108,7 @@ export const ExecutionHistoryPage: React.FC = () => {
             <Select
               value={selectedEndpointId}
               label="Filter By Endpoint"
-              onChange={(e) => setSelectedEndpointId(e.target.value)}
+              onChange={(e) => handleEndpointFilterChange(e.target.value)}
             >
               <MenuItem value="all">All Configured Endpoints</MenuItem>
               {endpoints.map((ep) => (
@@ -120,7 +139,7 @@ export const ExecutionHistoryPage: React.FC = () => {
         ) : isMobile ? (
           /* Mobile Adaptive Cards */
           <Stack spacing={2} sx={{ p: 1.5 }}>
-            {executions.map((x) => {
+            {paginatedExecutions.map((x) => {
               const ep = endpointMap.get(x.endpoint_id);
               return (
                 <Card
@@ -204,7 +223,7 @@ export const ExecutionHistoryPage: React.FC = () => {
           </Stack>
         ) : (
           /* Desktop Table View */
-          <TableContainer>
+          <TableContainer sx={{ overflowX: 'auto' }}>
             <Table>
               <TableHead>
                 <TableRow>
@@ -218,7 +237,7 @@ export const ExecutionHistoryPage: React.FC = () => {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {executions.map((x) => {
+                {paginatedExecutions.map((x) => {
                   const ep = endpointMap.get(x.endpoint_id);
                   return (
                     <TableRow
@@ -291,6 +310,48 @@ export const ExecutionHistoryPage: React.FC = () => {
               </TableBody>
             </Table>
           </TableContainer>
+        )}
+
+        {executions.length > 0 && (
+          <TablePagination
+            rowsPerPageOptions={[10, 25, 50, 100]}
+            component="div"
+            count={executions.length}
+            rowsPerPage={rowsPerPage}
+            page={safePage}
+            onPageChange={(_, newPage) => setPage(newPage)}
+            onRowsPerPageChange={(e) => {
+              setRowsPerPage(parseInt(e.target.value, 10));
+              setPage(0);
+            }}
+            sx={{
+              borderTop: '1px solid #1F2937',
+              color: '#9CA3AF',
+              '.MuiTablePagination-toolbar': {
+                flexWrap: 'wrap',
+                justifyContent: { xs: 'center', sm: 'flex-end' },
+                gap: { xs: 0.5, sm: 0 },
+                px: { xs: 1, sm: 2 },
+                minHeight: { xs: 48, sm: 52 },
+              },
+              '.MuiTablePagination-selectLabel': {
+                fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                color: '#9CA3AF',
+              },
+              '.MuiTablePagination-select': {
+                fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                color: '#F9FAFB',
+              },
+              '.MuiTablePagination-displayedRows': {
+                fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                color: '#9CA3AF',
+              },
+              '.MuiTablePagination-actions': {
+                ml: { xs: 0.5, sm: 1.5 },
+                color: '#9CA3AF',
+              },
+            }}
+          />
         )}
       </Card>
 

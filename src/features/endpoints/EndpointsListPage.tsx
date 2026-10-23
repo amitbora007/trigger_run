@@ -29,6 +29,7 @@ import {
   Grid,
   Stack,
   Divider,
+  TablePagination,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import SearchIcon from '@mui/icons-material/Search';
@@ -62,6 +63,8 @@ export const EndpointsListPage: React.FC = () => {
 
   const [search, setSearch] = useState('');
   const [filterTab, setFilterTab] = useState<'all' | 'active' | 'paused'>('all');
+  const [page, setPage] = useState<number>(0);
+  const [rowsPerPage, setRowsPerPage] = useState<number>(10);
   const [modalOpen, setModalOpen] = useState(false);
   const [editingEndpoint, setEditingEndpoint] = useState<MonitoredEndpoint | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<MonitoredEndpoint | null>(null);
@@ -78,6 +81,22 @@ export const EndpointsListPage: React.FC = () => {
     if (filterTab === 'paused') return !ep.is_enabled;
     return true;
   });
+
+  const handleFilterTabChange = (val: 'all' | 'active' | 'paused') => {
+    setFilterTab(val);
+    setPage(0);
+  };
+
+  const handleSearchChange = (val: string) => {
+    setSearch(val);
+    setPage(0);
+  };
+
+  const safePage = Math.min(page, Math.max(0, Math.ceil(filteredEndpoints.length / rowsPerPage) - 1));
+  const paginatedEndpoints = filteredEndpoints.slice(
+    safePage * rowsPerPage,
+    safePage * rowsPerPage + rowsPerPage
+  );
 
   const handleOpenCreate = () => {
     setEditingEndpoint(null);
@@ -188,7 +207,7 @@ export const EndpointsListPage: React.FC = () => {
         >
           <Tabs
             value={filterTab}
-            onChange={(_, val) => setFilterTab(val)}
+            onChange={(_, val) => handleFilterTabChange(val)}
             variant="scrollable"
             scrollButtons="auto"
             allowScrollButtonsMobile
@@ -211,7 +230,7 @@ export const EndpointsListPage: React.FC = () => {
             size="small"
             placeholder="Search endpoints by name or URL..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => handleSearchChange(e.target.value)}
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
@@ -249,7 +268,7 @@ export const EndpointsListPage: React.FC = () => {
         ) : isMobile ? (
           /* Mobile Adaptive Cards */
           <Stack spacing={2} sx={{ p: 1.5 }}>
-            {filteredEndpoints.map((ep) => (
+            {paginatedEndpoints.map((ep) => (
               <Card
                 key={ep.id}
                 sx={{
@@ -377,7 +396,7 @@ export const EndpointsListPage: React.FC = () => {
           </Stack>
         ) : (
           /* Desktop Table View */
-          <TableContainer>
+          <TableContainer sx={{ overflowX: 'auto' }}>
             <Table>
               <TableHead>
                 <TableRow>
@@ -390,7 +409,7 @@ export const EndpointsListPage: React.FC = () => {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {filteredEndpoints.map((ep) => (
+                {paginatedEndpoints.map((ep) => (
                   <TableRow key={ep.id} hover>
                     <TableCell>
                       <Typography variant="body2" sx={{ fontWeight: 700, color: '#F9FAFB' }}>
@@ -497,6 +516,48 @@ export const EndpointsListPage: React.FC = () => {
               </TableBody>
             </Table>
           </TableContainer>
+        )}
+
+        {filteredEndpoints.length > 0 && (
+          <TablePagination
+            rowsPerPageOptions={[5, 10, 25, 50]}
+            component="div"
+            count={filteredEndpoints.length}
+            rowsPerPage={rowsPerPage}
+            page={safePage}
+            onPageChange={(_, newPage) => setPage(newPage)}
+            onRowsPerPageChange={(e) => {
+              setRowsPerPage(parseInt(e.target.value, 10));
+              setPage(0);
+            }}
+            sx={{
+              borderTop: '1px solid #1F2937',
+              color: '#9CA3AF',
+              '.MuiTablePagination-toolbar': {
+                flexWrap: 'wrap',
+                justifyContent: { xs: 'center', sm: 'flex-end' },
+                gap: { xs: 0.5, sm: 0 },
+                px: { xs: 1, sm: 2 },
+                minHeight: { xs: 48, sm: 52 },
+              },
+              '.MuiTablePagination-selectLabel': {
+                fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                color: '#9CA3AF',
+              },
+              '.MuiTablePagination-select': {
+                fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                color: '#F9FAFB',
+              },
+              '.MuiTablePagination-displayedRows': {
+                fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                color: '#9CA3AF',
+              },
+              '.MuiTablePagination-actions': {
+                ml: { xs: 0.5, sm: 1.5 },
+                color: '#9CA3AF',
+              },
+            }}
+          />
         )}
       </Card>
 

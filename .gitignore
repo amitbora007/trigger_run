@@ -33,5 +33,7 @@ Thumbs.db
 *.suo
 *.ntvs*
 *.njsproj
-*.sln
 *.sw?
+
+# Supabase
+supabase/.temp/
