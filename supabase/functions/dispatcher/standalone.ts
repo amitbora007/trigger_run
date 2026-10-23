@@ -26,6 +26,9 @@ export interface MonitoredEndpoint {
   next_run_at: string;
   last_run_at: string | null;
   lease_expires_at: string | null;
+  notify_on_failure?: boolean;
+  notification_email?: string | null;
+  last_alert_sent_at?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -614,5 +617,157 @@ async function executeMonitoredEndpoint(
     }
   }
 
+  // 9. Automated Incident Alert Notification via Resend (with 15-minute cooldown)
+  if (!result.success && endpoint.notify_on_failure !== false && isValidUuid(result.endpoint_id)) {
+    try {
+      await handleFailureNotification(endpoint, result, supabase, correlationId);
+    } catch (notifyErr: any) {
+      console.error(`[${correlationId}] Failed to process alert notification for endpoint ${endpoint.id}:`, notifyErr);
+    }
+  }
+
   return result;
+}
+
+const ALERT_COOLDOWN_MS = 15 * 60 * 1000; // 15 minutes alert cooldown
+
+async function handleFailureNotification(
+  endpoint: MonitoredEndpoint,
+  result: ExecutionResult,
+  supabase: any,
+  correlationId: string
+) {
+  // Check cooldown: avoid alert storm if alerted recently
+  if (endpoint.last_alert_sent_at) {
+    const elapsedMs = Date.now() - new Date(endpoint.last_alert_sent_at).getTime();
+    if (elapsedMs < ALERT_COOLDOWN_MS) {
+      console.log(
+        `[${correlationId}] Skipping alert for ${endpoint.name}: cooldown active (${Math.round(
+          (ALERT_COOLDOWN_MS - elapsedMs) / 1000
+        )}s remaining)`
+      );
+      return;
+    }
+  }
+
+  // Resolve recipient email: custom endpoint notification_email or fallback to user profile / auth
+  let recipientEmail = endpoint.notification_email?.trim();
+  if (!recipientEmail && endpoint.user_id) {
+    try {
+      const { data: userData } = await supabase.auth.admin.getUserById(endpoint.user_id);
+      recipientEmail = userData?.user?.email;
+    } catch {
+      // Ignored: will log if email cannot be resolved
+    }
+  }
+
+  if (!recipientEmail) {
+    console.log(`[${correlationId}] No notification email configured or resolved for endpoint ${endpoint.id}`);
+    return;
+  }
+
+  const resendApiKey = Deno.env.get('RESEND_API_KEY');
+  if (!resendApiKey) {
+    console.log(`[${correlationId}] RESEND_API_KEY is not set. Alert notification skipped.`);
+    return;
+  }
+
+  const emailSubject = `🚨 [INCIDENT] ${endpoint.name} is Failing`;
+  const emailHtml = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>VigilAPI Incident Alert</title>
+</head>
+<body style="margin: 0; padding: 24px; background-color: #0B0F19; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #F9FAFB;">
+  <div style="max-width: 600px; margin: 0 auto; background-color: #111827; border: 1px solid #1F2937; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);">
+    <div style="padding: 24px 28px; background-color: #1F2937; border-bottom: 1px solid #374151;">
+      <h2 style="margin: 0; color: #EF4444; font-size: 20px; font-weight: 700;">
+        ⚠️ VigilAPI Incident Alert
+      </h2>
+      <p style="margin: 6px 0 0 0; color: #9CA3AF; font-size: 14px;">
+        Scheduled health check failure detected for your monitored endpoint.
+      </p>
+    </div>
+    
+    <div style="padding: 28px;">
+      <table style="width: 100%; border-collapse: collapse; margin-bottom: 24px; font-size: 14px;">
+        <tr>
+          <td style="padding: 10px 0; color: #9CA3AF; border-bottom: 1px solid #1F2937; width: 140px;">Endpoint</td>
+          <td style="padding: 10px 0; color: #F9FAFB; font-weight: 600; border-bottom: 1px solid #1F2937;">${endpoint.name}</td>
+        </tr>
+        <tr>
+          <td style="padding: 10px 0; color: #9CA3AF; border-bottom: 1px solid #1F2937;">Target URL</td>
+          <td style="padding: 10px 0; color: #60A5FA; font-family: monospace; font-size: 13px; border-bottom: 1px solid #1F2937; word-break: break-all;">${endpoint.endpoint_url}</td>
+        </tr>
+        <tr>
+          <td style="padding: 10px 0; color: #9CA3AF; border-bottom: 1px solid #1F2937;">Status Code</td>
+          <td style="padding: 10px 0; color: #EF4444; font-weight: 700; border-bottom: 1px solid #1F2937;">${result.status_code !== null ? result.status_code : 'Connection Failed'}</td>
+        </tr>
+        <tr>
+          <td style="padding: 10px 0; color: #9CA3AF; border-bottom: 1px solid #1F2937;">Error Category</td>
+          <td style="padding: 10px 0; border-bottom: 1px solid #1F2937;">
+            <span style="background-color: rgba(239, 68, 68, 0.2); color: #F87171; padding: 3px 8px; border-radius: 6px; font-size: 12px; font-weight: 600;">
+              ${result.error_category || 'UNKNOWN'}
+            </span>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding: 10px 0; color: #9CA3AF; border-bottom: 1px solid #1F2937;">Diagnostic</td>
+          <td style="padding: 10px 0; color: #EF4444; font-family: monospace; font-size: 13px; border-bottom: 1px solid #1F2937; word-break: break-word;">
+            ${result.sanitized_error_message || 'Non-2xx response received'}
+          </td>
+        </tr>
+        <tr>
+          <td style="padding: 10px 0; color: #9CA3AF;">Occurred At</td>
+          <td style="padding: 10px 0; color: #D1D5DB;">${new Date(result.started_at).toUTCString()}</td>
+        </tr>
+      </table>
+
+      <div style="text-align: center; margin-top: 24px;">
+        <a href="https://amitbora007.github.io/vigilapi/#/executions" style="display: inline-block; background-color: #10B981; color: #FFFFFF; text-decoration: none; font-weight: 600; padding: 12px 24px; border-radius: 8px; font-size: 14px;">
+          View Incident in VigilAPI Dashboard
+        </a>
+      </div>
+
+      <p style="margin-top: 28px; color: #6B7280; font-size: 12px; text-align: center; border-top: 1px solid #1F2937; padding-top: 16px;">
+        VigilAPI Autonomous Cloud API Watchdog • Automated alert throttled to 1 per 15 minutes.
+      </p>
+    </div>
+  </div>
+</body>
+</html>
+  `;
+
+  const senderEmail = Deno.env.get('RESEND_FROM_EMAIL') || 'VigilAPI Alerts <onboarding@resend.dev>';
+
+  const res = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${resendApiKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      from: senderEmail,
+      to: [recipientEmail],
+      subject: emailSubject,
+      html: emailHtml,
+    }),
+  });
+
+  if (!res.ok) {
+    const errorText = await res.text();
+    console.error(`[${correlationId}] Resend API returned error ${res.status}:`, errorText);
+    return;
+  }
+
+  const sendResult = await res.json();
+  console.log(`[${correlationId}] Incident alert sent to ${recipientEmail} via Resend (ID: ${sendResult.id})`);
+
+  // Update last_alert_sent_at in monitored_endpoints
+  await supabase
+    .from('monitored_endpoints')
+    .update({ last_alert_sent_at: new Date().toISOString() })
+    .eq('id', endpoint.id);
 }
