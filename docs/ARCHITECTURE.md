@@ -60,8 +60,9 @@ flowchart TD
 ### Pillar 1: The Face (Frontend Web Dashboard)
 - **What it is**: The visual dashboard where you log in, add monitored URLs, set monitoring cadences (5m, 10m, 1h), see latency graphs, and review incident alerts.
 - **Technology**: Built with React, TypeScript, Material UI (MUI), and Recharts.
+- **Responsive Architecture**: Includes mobile-adaptive dual rendering (stacked cards on mobile, horizontally-scrollable tables on desktop) and responsive pagination across all four views (Recent Incident Alerts, Endpoints, Execution History, Analytics).
 - **Where it lives**: Hosted for free on **GitHub Pages** (`https://amitbora007.github.io/vigilapi/`).
-- **How it works**: Whenever you open the page in your phone or browser, it connects securely to Supabase using public API keys and your login credentials to fetch your real-time data.
+- **How it works**: Whenever you open the page in your phone or browser, it connects securely to Supabase using public API keys and your login credentials to fetch your real-time data using chunked range querying.
 
 ---
 
@@ -153,6 +154,9 @@ Every 60 seconds, PostgreSQL automatically calls the Edge Function. The Edge Fun
 | **Browser CORS Bypass for "Test Run Now"** | Web browsers strictly block web pages from sending requests to random 3rd-party domains due to CORS security rules. | When you click **Test Run Now** in the dashboard, your browser doesn't call the target API directly. Instead, it asks the Supabase Edge Function (`action: 'test_endpoint'`) to make the call from the cloud server and return the diagnostic back to your screen. |
 | **Atomic Claiming (No Duplicate Runs)** | If multiple dispatcher runs overlap, we don't want your API to be hammered twice. | PostgreSQL uses `SELECT ... FOR UPDATE SKIP LOCKED` and temporary lease locks (`lease_expires_at`). Only one worker can claim an endpoint at a time. |
 | **Automatic Log Pruning** | Keeps your database slim and within free tier limits (7-day data retention). | A stored procedure (`purge_expired_executions`) automatically deletes audit logs older than 7 days. |
+| **Responsive Viewport Pagination** | Eliminates DOM bloating and horizontal clipping on mobile devices ($320\text{px} - 390\text{px}$). | Uses Material UI `TablePagination` with dual-mode responsive rendering (cards on mobile, tables on desktop) across all 4 core pages. |
+| **Full Retention Telemetry Chunking** | Prevents silent data truncation and PostgREST 1,000-row limits. | Chunked range querying (`range(from, from + 999)`) fetches the entire 7-day execution dataset safely. |
+| **Isolated Sandbox Authentication** | Prevents accidental credential leaks and unauthorized demo fallback. | Strict password verification with Supabase Auth; demo mode strictly isolated to explicit "Explore Sandbox Demo" button. |
 
 ---
 

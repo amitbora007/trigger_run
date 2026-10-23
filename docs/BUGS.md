@@ -77,3 +77,45 @@ This document details critical concurrency bugs, distributed systems edge cases,
 - **Severity**: Medium (Edge Function Crash)
 - **Problem**: Monitored endpoint returns a 100 MB video file or continuous stream, exhausting the Edge Function's memory allocation (150 MB) and causing container crash.
 - **Resolution**: Response stream reader caps consumption at 32 KB, immediately cancels the reader stream via `reader.cancel()`, and marks `is_truncated = true`.
+
+---
+
+## 4. Frontend Architecture, Authentication & Data Integrity Bugs
+
+### BUG-006: Execution History Query Truncation (Silent 100-Record Ceiling)
+- **Severity**: High (Telemetry Data Invisibility & Audit Inaccuracy)
+- **Problem**: When navigating to Execution History, Dashboard Overview, or Analytics, only the first 100 execution records were ever queried from PostgreSQL. Historical audit records from earlier runs were silently excluded, even though they existed in the database and were well within the 7-day retention window.
+- **Root Cause**: `useExecutions.ts` had a hardcoded `.limit(100)` applied whenever `filters?.limit` was omitted. In addition, `DashboardOverviewPage` passed `{ limit: 100 }`, capping the calculated metrics (uptime percentage, average latency, total count), and `AnalyticsPage` passed `{ limit: 500 }`.
+- **Resolution**:
+  1. Removed the default `.limit(100)` cap in `useExecutions.ts`.
+  2. Implemented chunked range fetching using PostgreSQL `range(from, from + 999)` up to a safety ceiling of 10,000 records to seamlessly bypass PostgREST's default 1,000-row limit without memory exhaustion.
+  3. Removed artificial limit arguments from `DashboardOverviewPage` and `AnalyticsPage` so that overview metrics and telemetry summaries reflect the true complete dataset.
+- **Mitigation Proof**: Automated tests in `Pagination.test.tsx` verify multi-page traversal beyond 100 records and audit completeness.
+
+### BUG-007: Password Validation Bypass & Auto-Authentication Fallback
+- **Severity**: Critical (Authentication Bypass)
+- **Problem**: Submitting the login form with an invalid password or non-existent username would log the user in anyway without error.
+- **Root Cause**: In `AuthContext.tsx`, `isDemoMode` defaulted to `!isSupabaseConfigured`. If the client initialized before credentials resolved or if demo mode was previously active, `signIn()` took the branch `if (isDemoMode) { setUser({ ...DEMO_USER, email }); return { error: null }; }`. This completely bypassed Supabase authentication and accepted any credential pair.
+- **Resolution**:
+  1. Defaulted `isDemoMode` strictly to `false`.
+  2. Removed automatic fallback to `DEMO_USER` on application mount.
+  3. `signIn` now strictly executes `supabase.auth.signInWithPassword({ email, password })` and returns authentication errors directly.
+  4. Explicitly resets `isDemoMode = false` on `signOut()`.
+- **Mitigation Proof**: Playwright and Vitest tests in `tests/components/Auth.test.tsx` verify that incorrect passwords trigger an error alert and reject authentication.
+
+### BUG-008: Unintended Demo Mode Activation on Credential Failure
+- **Severity**: High (User Confusion & Security Isolation)
+- **Problem**: Users entering an incorrect username or password were automatically transitioned into Demo Mode instead of seeing a credential error message.
+- **Root Cause**: Shared session state in `AuthContext` coupled with the aforementioned fallback logic treated any failed or unauthenticated state as an implicit signal to activate demo capabilities.
+- **Resolution**: Isolated Demo Mode strictly to explicit user action. Demo Mode is now only activated when the user deliberately clicks the **"Explore Sandbox Demo"** button on the login screen (`enableDemoMode()`). Any attempt to submit credentials through the Sign In or Sign Up forms is strictly validated against Supabase Auth.
+- **Mitigation Proof**: Automated assertions verify that entering bad credentials keeps `user` as `null` and displays the Supabase error banner.
+
+### BUG-009: Unbounded Data Rendering & Missing Viewport Pagination
+- **Severity**: Medium (DOM Bloat & Mobile Layout Degradation)
+- **Problem**: Monitored Endpoints, Execution History, Analytics Audit Summary, and Dashboard Recent Incident Alerts initially rendered unbounded lists or hardcoded slices (e.g. `.slice(0, 5)`). On devices with smaller screens (mobile / tablet), large execution logs caused heavy DOM node inflation, horizontal layout clipping, and sluggish interaction.
+- **Resolution**:
+  1. Introduced responsive client-side pagination via Material-UI `TablePagination` with configurable page sizes (`[5, 10, 25]` or `[10, 25, 50]`).
+  2. Implemented dual-layout responsive rendering: stacked responsive cards for mobile viewports (`theme.breakpoints.down('md')`) and horizontally scrollable `<TableContainer sx={{ overflowX: 'auto' }}>` for desktop viewports.
+  3. Wrapped pagination toolbars with `flexWrap: 'wrap'` and scaled font/icon sizes to eliminate horizontal overflow on mobile viewports ($320\text{px} - 390\text{px}$).
+  4. Added pagination controls to Dashboard Overview ("Recent Incident Alerts"), Endpoints List, Execution History, and Analytics Audit Summary.
+- **Mitigation Proof**: Tested across 320px–1280px viewports with zero horizontal scrolling regressions and verified by 11 unit tests in `Pagination.test.tsx`.

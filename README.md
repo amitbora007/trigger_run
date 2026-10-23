@@ -25,8 +25,10 @@ It runs scheduled HTTP health checks **100% independently of client sessions**. 
 - **Atomic Claim-and-Lease Concurrency**: Uses PostgreSQL `FOR UPDATE SKIP LOCKED` and expiring leases (`lease_expires_at`) to guarantee zero duplicate executions and automatic worker failure recovery.
 - **Deterministic Non-Storm Catch-Up**: Overdue endpoints resume their cadence smoothly without generating request storms.
 - **SSRF Defense-in-Depth**: Multi-layer protection against Server-Side Request Forgery, blocking RFC 1918 private IPs, AWS/GCP/Azure metadata (`169.254.169.254`), loopbacks, IPv6 variations, and obfuscated octal/hex encodings.
-- **Zero Secret Leakage**: Hop-by-hop header stripping, regex-based secret redaction, and strict response header allowlisting.
-- **Enterprise SaaS Dashboard**: Polished Material UI interface with live status chips, dynamic Recharts visualizations (latency trends & volume breakdown), manual run triggers, and a safe JSON response inspector.
+- **Enterprise SaaS Dashboard & Responsive Pagination**: Polished Material UI interface with live status chips, dynamic Recharts visualizations (latency trends & volume breakdown), manual run triggers, a safe JSON response inspector, and fully responsive pagination across all 4 core views (Overview Incident Alerts, Monitored Endpoints, Execution History, Analytics Audit Summary).
+- **Mobile-Adaptive Layouts**: Dual-mode rendering with stacked card lists on mobile viewports and scrollable tables on desktop, ensuring zero horizontal overflow or clipping down to 320px screens.
+- **Uncapped Historical Querying**: Chunked range querying (`range(from, from + 999)`) ensures all execution records within the 7-day retention period are fetched and analyzed without artificial limits.
+- **Strict Authentication & Isolated Sandbox**: Secure Supabase password validation with explicit credential error handling and demo mode strictly isolated to manual sandbox exploration.
 - **Automated Retention**: Daily pg_cron job purges execution logs older than 7 days, preventing unbounded database growth.
 
 ---

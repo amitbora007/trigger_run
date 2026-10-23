@@ -18,6 +18,7 @@ import {
   useMediaQuery,
   useTheme,
   Stack,
+  TablePagination,
 } from '@mui/material';
 import SensorsIcon from '@mui/icons-material/Sensors';
 import SpeedIcon from '@mui/icons-material/Speed';
@@ -66,7 +67,18 @@ export const DashboardOverviewPage: React.FC = () => {
   const totalLatency = executions.reduce((acc, curr) => acc + (curr.response_time_ms || 0), 0);
   const avgLatency = totalExecutions > 0 ? Math.round(totalLatency / totalExecutions) : 0;
 
-  const recentFailures = executions.filter((x) => !x.success).slice(0, 5);
+  const recentFailures = executions.filter((x) => !x.success);
+  const [incidentPage, setIncidentPage] = React.useState<number>(0);
+  const [incidentRowsPerPage, setIncidentRowsPerPage] = React.useState<number>(5);
+
+  const safeIncidentPage = Math.min(
+    incidentPage,
+    Math.max(0, Math.ceil(recentFailures.length / incidentRowsPerPage) - 1)
+  );
+  const paginatedIncidents = recentFailures.slice(
+    safeIncidentPage * incidentRowsPerPage,
+    safeIncidentPage * incidentRowsPerPage + incidentRowsPerPage
+  );
 
   // Latency trends for Recharts
   const latencyData = [...executions]
@@ -325,7 +337,7 @@ export const DashboardOverviewPage: React.FC = () => {
             </Box>
           ) : isMobile ? (
             <Stack spacing={1.5}>
-              {recentFailures.map((rf) => (
+              {paginatedIncidents.map((rf) => (
                 <Box
                   key={rf.id}
                   sx={{
@@ -361,7 +373,7 @@ export const DashboardOverviewPage: React.FC = () => {
               ))}
             </Stack>
           ) : (
-            <TableContainer>
+            <TableContainer sx={{ overflowX: 'auto' }}>
               <Table size="small">
                 <TableHead>
                   <TableRow>
@@ -373,7 +385,7 @@ export const DashboardOverviewPage: React.FC = () => {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {recentFailures.map((rf) => (
+                  {paginatedIncidents.map((rf) => (
                     <TableRow key={rf.id} hover>
                       <TableCell>{formatRelativeTime(rf.started_at)}</TableCell>
                       <TableCell>
@@ -398,6 +410,50 @@ export const DashboardOverviewPage: React.FC = () => {
                 </TableBody>
               </Table>
             </TableContainer>
+          )}
+
+          {recentFailures.length > 0 && (
+            <TablePagination
+              component="div"
+              count={recentFailures.length}
+              page={safeIncidentPage}
+              onPageChange={(_, newPage) => setIncidentPage(newPage)}
+              rowsPerPage={incidentRowsPerPage}
+              onRowsPerPageChange={(e) => {
+                setIncidentRowsPerPage(parseInt(e.target.value, 10));
+                setIncidentPage(0);
+              }}
+              rowsPerPageOptions={[5, 10, 25]}
+              labelRowsPerPage="Rows per page:"
+              sx={{
+                borderTop: '1px solid #1F2937',
+                color: '#9CA3AF',
+                mt: 1.5,
+                '.MuiTablePagination-toolbar': {
+                  flexWrap: 'wrap',
+                  justifyContent: { xs: 'center', sm: 'flex-end' },
+                  gap: { xs: 0.5, sm: 0 },
+                  px: { xs: 1, sm: 2 },
+                  minHeight: { xs: 48, sm: 52 },
+                },
+                '.MuiTablePagination-selectLabel': {
+                  fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                  color: '#9CA3AF',
+                },
+                '.MuiTablePagination-select': {
+                  fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                  color: '#F9FAFB',
+                },
+                '.MuiTablePagination-displayedRows': {
+                  fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                  color: '#9CA3AF',
+                },
+                '.MuiTablePagination-actions': {
+                  ml: { xs: 0.5, sm: 1.5 },
+                  color: '#9CA3AF',
+                },
+              }}
+            />
           )}
         </CardContent>
       </Card>

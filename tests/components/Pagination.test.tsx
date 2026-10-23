@@ -1,8 +1,10 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { MemoryRouter } from 'react-router-dom';
 import { ThemeProvider } from '@mui/material/styles';
 import { appTheme } from '../../src/app/theme';
+import { DashboardOverviewPage } from '../../src/features/dashboard/DashboardOverviewPage';
 import { ExecutionHistoryPage } from '../../src/features/executions/ExecutionHistoryPage';
 import { EndpointsListPage } from '../../src/features/endpoints/EndpointsListPage';
 import { AnalyticsPage } from '../../src/features/analytics/AnalyticsPage';
@@ -45,6 +47,27 @@ const mockExecutions: EndpointExecution[] = Array.from({ length: 25 }, (_, i) =>
   created_at: new Date(Date.now() - i * 60000).toISOString(),
 }));
 
+const mockExecutionsWithFailures: EndpointExecution[] = Array.from({ length: 25 }, (_, i) => ({
+  id: `exec-${i + 1}`,
+  endpoint_id: `ep-${(i % 15) + 1}`,
+  user_id: 'user-1',
+  scheduled_at: new Date(Date.now() - i * 60000).toISOString(),
+  started_at: new Date(Date.now() - i * 60000).toISOString(),
+  completed_at: new Date(Date.now() - i * 60000 + 150).toISOString(),
+  status_code: i < 12 ? 500 : 200,
+  response_time_ms: 100 + i * 10,
+  success: i >= 12,
+  error_category: i < 12 ? 'HTTP_ERROR' : null,
+  sanitized_error_message: i < 12 ? 'Internal Server Error' : null,
+  response_headers: {},
+  response_body: i < 12 ? '{"error":"fail"}' : '{"status":"ok"}',
+  is_truncated: false,
+  correlation_id: `corr-${i + 1}`,
+  created_at: new Date(Date.now() - i * 60000).toISOString(),
+}));
+
+let currentExecutions: EndpointExecution[] = mockExecutions;
+
 vi.mock('../../src/features/endpoints/hooks/useEndpoints', () => ({
   useEndpoints: () => ({
     endpoints: mockEndpoints,
@@ -59,15 +82,32 @@ vi.mock('../../src/features/endpoints/hooks/useEndpoints', () => ({
 
 vi.mock('../../src/features/executions/hooks/useExecutions', () => ({
   useExecutions: () => ({
-    executions: mockExecutions,
+    executions: currentExecutions,
     isLoading: false,
     refetch: vi.fn(),
     triggerTestRun: vi.fn(),
   }),
 }));
 
+vi.mock('../../src/features/dashboard/hooks/useCronSchedule', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../src/features/dashboard/hooks/useCronSchedule')>();
+  return {
+    ...actual,
+    useCronSchedule: () => ({
+      schedule: '*/4 * * * *',
+      humanLabel: 'Every 4 minutes',
+      isLoading: false,
+      updateSchedule: vi.fn(),
+    }),
+  };
+});
+
 function renderWithTheme(ui: React.ReactElement) {
-  return render(<ThemeProvider theme={appTheme}>{ui}</ThemeProvider>);
+  return render(
+    <MemoryRouter>
+      <ThemeProvider theme={appTheme}>{ui}</ThemeProvider>
+    </MemoryRouter>
+  );
 }
 
 describe('Pagination Controls and Behavior', () => {
@@ -176,6 +216,34 @@ describe('Pagination Controls and Behavior', () => {
       fireEvent.click(nextPageBtn);
 
       expect(screen.getByText(/6–10 of 15/i)).toBeInTheDocument();
+    });
+  });
+
+  describe('DashboardOverviewPage Recent Incident Alerts Pagination', () => {
+    beforeEach(() => {
+      currentExecutions = mockExecutionsWithFailures;
+    });
+
+    afterEach(() => {
+      currentExecutions = mockExecutions;
+    });
+
+    it('renders Recent Incident Alerts with pagination controls and limits to 5 per page', () => {
+      renderWithTheme(<DashboardOverviewPage />);
+
+      expect(screen.getByText('Recent Incident Alerts')).toBeInTheDocument();
+      // 12 failures with 5 per page => 1–5 of 12
+      expect(screen.getByText(/1–5 of 12/i)).toBeInTheDocument();
+      expect(screen.getByText(/Rows per page:/i)).toBeInTheDocument();
+    });
+
+    it('navigates through incident alert pages', () => {
+      renderWithTheme(<DashboardOverviewPage />);
+
+      const nextPageBtn = screen.getByTitle(/Go to next page/i);
+      fireEvent.click(nextPageBtn);
+
+      expect(screen.getByText(/6–10 of 12/i)).toBeInTheDocument();
     });
   });
 });
