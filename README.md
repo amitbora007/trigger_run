@@ -1,14 +1,14 @@
 # VigilAPI — Production-Minded Serverless API Monitoring Platform
 
 ![VigilAPI Architecture](https://img.shields.io/badge/Architecture-Serverless%20Supabase-emerald)
-![TypeScript](https://img.shields.io/badge/TypeScript-Strict-blue)
+![ReactJS](https://img.shields.io/badge/Frontend-ReactJS%20(JSX)-61DAFB)
 ![CI/CD](https://github.com/amitbora007/vigilapi/actions/workflows/ci.yml/badge.svg)
 ![Deployment](https://github.com/amitbora007/vigilapi/actions/workflows/deploy.yml/badge.svg)
 ![Live App](https://img.shields.io/badge/Live%20App-GitHub%20Pages-brightgreen)
 
 **Live Web Application**: [https://amitbora007.github.io/vigilapi/](https://amitbora007.github.io/vigilapi/)
 
-VigilAPI is a production-minded, multi-tenant HTTP endpoint health monitoring web application built on **React, TypeScript, Supabase PostgreSQL, Supabase Cron (`pg_cron`), and Supabase Edge Functions**.
+VigilAPI is a production-minded, multi-tenant HTTP endpoint health monitoring web application built on **ReactJS, Supabase PostgreSQL, Supabase Cron (`pg_cron`), and Supabase Edge Functions**.
 
 It runs scheduled HTTP health checks **100% independently of client sessions**. Users can close their browser, log out, or shut down their computer without interrupting monitoring schedules.
 
@@ -38,7 +38,7 @@ It runs scheduled HTTP health checks **100% independently of client sessions**. 
 
 ```
 +--------------------------------------------------------------------+
-| BROWSER: React 19 + TypeScript + MUI + TanStack Query              |
+| BROWSER: React 19 (JSX) + MUI + TanStack Query                     |
 | - Authenticated Endpoint Management (CRUD)                         |
 | - Real-time Execution History & Latency Trends (Recharts)          |
 | - Safe JSON Response Viewer (No arbitrary HTML rendering)          |
@@ -92,9 +92,9 @@ It runs scheduled HTTP health checks **100% independently of client sessions**. 
 │           └── index.ts         # Main Edge Function dispatcher & worker pool
 ├── src/
 │   ├── app/
-│   │   ├── App.tsx              # Root component & providers
-│   │   ├── routes.tsx           # React Router route tree
-│   │   └── theme.ts             # Custom dark/light MUI SaaS theme
+│   │   ├── App.jsx              # Root component & providers
+│   │   ├── routes.jsx           # React Router route tree
+│   │   └── theme.js             # Custom dark/light cyber MUI theme
 │   ├── components/
 │   │   ├── common/              # MetricCard, JsonViewer, StatusChip, etc.
 │   │   └── layout/              # AppLayout, Sidebar, Navbar
@@ -105,18 +105,18 @@ It runs scheduled HTTP health checks **100% independently of client sessions**. 
 │   │   ├── executions/          # ExecutionHistoryPage, ExecutionDetailModal
 │   │   └── analytics/           # Deep dive metrics & percentile charts
 │   ├── lib/
-│   │   ├── supabaseClient.ts    # Supabase browser client
-│   │   ├── ssrfValidator.ts     # Client-side validation preview
-│   │   └── formatters.ts        # Date, latency, and status formatters
+│   │   ├── supabaseClient.js    # Supabase browser client
+│   │   ├── ssrfValidator.js     # Client-side validation preview
+│   │   └── formatters.js        # Date, latency, and status formatters
 │   └── types/
-│       └── index.ts             # Domain & DB type definitions
+│       └── index.js             # Domain constants & categories
 ├── tests/
 │   ├── unit/                    # SSRF, headers, scheduling & catch-up tests
 │   └── components/              # React Testing Library form & auth tests
 ├── .env.example
 ├── package.json
-├── tsconfig.json
-└── vite.config.ts
+├── jsconfig.json
+└── vite.config.js
 ```
 
 ---
@@ -158,8 +158,8 @@ npm test
 # Run tests with coverage
 npm run test:coverage
 
-# Run TypeScript type check
-npm run typecheck
+# Build production bundle
+npm run build
 ```
 
 ---

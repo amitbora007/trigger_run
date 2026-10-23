@@ -24,9 +24,6 @@ jobs:
       - name: Install Node Dependencies
         run: npm ci
 
-      - name: TypeScript Typecheck
-        run: npm run typecheck
-
       - name: Run Vitest Suite (Unit & Component Tests)
         env:
           VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL || 'https://ejeugpfpstgfumbkvjon.supabase.co' }}

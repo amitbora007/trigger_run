@@ -59,7 +59,7 @@ flowchart TD
 
 ### Pillar 1: The Face (Frontend Web Dashboard)
 - **What it is**: The visual dashboard where you log in, add monitored URLs, set monitoring cadences (5m, 10m, 1h), see latency graphs, and review incident alerts.
-- **Technology**: Built with React, TypeScript, Material UI (MUI), and Recharts.
+- **Technology**: Built with ReactJS (JSX), Material UI (MUI), and Recharts.
 - **Responsive Architecture**: Includes mobile-adaptive dual rendering (stacked cards on mobile, horizontally-scrollable tables on desktop) and responsive pagination across all four views (Recent Incident Alerts, Endpoints, Execution History, Analytics).
 - **Where it lives**: Hosted for free on **GitHub Pages** (`https://amitbora007.github.io/vigilapi/`).
 - **How it works**: Whenever you open the page in your phone or browser, it connects securely to Supabase using public API keys and your login credentials to fetch your real-time data using chunked range querying.
