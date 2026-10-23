@@ -16,6 +16,7 @@ import {
   useMediaQuery,
   useTheme,
   Stack,
+  Chip,
 } from '@mui/material';
 import {
   BarChart,
@@ -114,14 +115,29 @@ export const AnalyticsPage: React.FC = () => {
   return (
     <Box>
       <Box sx={{ mb: 3.5 }}>
-        <Typography
-          variant="h4"
-          sx={{ fontWeight: 800, fontSize: { xs: '1.5rem', sm: '1.85rem', md: '2.125rem' } }}
-        >
-          Telemetry & Performance Analytics
-        </Typography>
-        <Typography variant="body2" color="text.secondary">
-          Deep-dive latency distributions, percentiles, and error taxonomy analysis.
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 0.5 }}>
+          <Typography
+            variant="h4"
+            sx={{ fontWeight: 800, fontSize: { xs: '1.6rem', sm: '1.95rem', md: '2.25rem' }, letterSpacing: '-0.03em' }}
+          >
+            Telemetry & Analytics
+          </Typography>
+          <Chip
+            label="Statistical Engine"
+            size="small"
+            sx={{
+              height: 20,
+              fontSize: '0.65rem',
+              fontWeight: 700,
+              backgroundColor: 'rgba(99, 102, 241, 0.1)',
+              color: '#818CF8',
+              border: '1px solid rgba(99, 102, 241, 0.3)',
+              fontFamily: '"JetBrains Mono", monospace',
+            }}
+          />
+        </Box>
+        <Typography variant="body2" sx={{ color: '#94A3B8' }}>
+          Deep-dive latency distributions, percentile thresholds, and error taxonomy telemetry.
         </Typography>
       </Box>
 
@@ -162,42 +178,46 @@ export const AnalyticsPage: React.FC = () => {
         <Grid item xs={12} lg={7}>
           <Card sx={{ height: '100%', p: 2 }}>
             <CardContent>
-              <Typography variant="h6" sx={{ fontWeight: 700, mb: 0.5 }}>
+              <Typography variant="h6" sx={{ fontWeight: 700, letterSpacing: '-0.015em', mb: 0.5 }}>
                 Average Latency By Endpoint (ms)
               </Typography>
-              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 2 }}>
-                Cross-service performance comparison.
+              <Typography variant="caption" sx={{ color: '#94A3B8', display: 'block', mb: 2 }}>
+                Cross-service telemetry and execution benchmark comparison.
               </Typography>
 
               <Box sx={{ width: '100%', height: 260 }}>
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={statsPerEndpoint} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#1F2937" vertical={false} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.05)" vertical={false} />
                     <XAxis
                       dataKey="name"
-                      stroke="#6B7280"
+                      stroke="#64748B"
                       fontSize={11}
                       tickLine={false}
                       tickFormatter={(v) => (v.length > (isMobile ? 8 : 15) ? `${v.slice(0, isMobile ? 8 : 15)}...` : v)}
                     />
                     <YAxis
-                      stroke="#6B7280"
+                      stroke="#64748B"
                       fontSize={11}
                       tickLine={false}
+                      fontFamily='"JetBrains Mono", monospace'
                       tickFormatter={(v) => `${v}ms`}
                     />
                     <Tooltip
                       contentStyle={{
-                        backgroundColor: '#1F2937',
-                        border: '1px solid #374151',
-                        borderRadius: 8,
-                        boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.5)',
+                        backgroundColor: 'rgba(10, 15, 29, 0.92)',
+                        backdropFilter: 'blur(12px)',
+                        WebkitBackdropFilter: 'blur(12px)',
+                        border: '1px solid rgba(99, 102, 241, 0.35)',
+                        borderRadius: 10,
+                        boxShadow: '0 10px 25px -3px rgba(0, 0, 0, 0.7), 0 0 15px rgba(99, 102, 241, 0.2)',
+                        fontFamily: '"JetBrains Mono", monospace',
                       }}
-                      itemStyle={{ color: '#F9FAFB', fontSize: '0.875rem' }}
-                      labelStyle={{ color: '#F9FAFB', fontWeight: 700, marginBottom: 4 }}
-                      formatter={(v: any) => [`${v}ms`, 'Average Latency']}
+                      itemStyle={{ color: '#818CF8', fontSize: '0.875rem', fontWeight: 600 }}
+                      labelStyle={{ color: '#F8FAFC', fontWeight: 700, marginBottom: 4 }}
+                      formatter={(v: any) => [`${v} ms`, 'Avg Latency']}
                     />
-                    <Bar dataKey="avgLatency" fill="#6366F1" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="avgLatency" fill="#6366F1" radius={[6, 6, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               </Box>
@@ -209,11 +229,11 @@ export const AnalyticsPage: React.FC = () => {
         <Grid item xs={12} lg={5}>
           <Card sx={{ height: '100%', p: 2 }}>
             <CardContent>
-              <Typography variant="h6" sx={{ fontWeight: 700, mb: 0.5 }}>
+              <Typography variant="h6" sx={{ fontWeight: 700, letterSpacing: '-0.015em', mb: 0.5 }}>
                 Failure Taxonomy Breakdown
               </Typography>
-              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 2 }}>
-                Categorization of failed requests.
+              <Typography variant="caption" sx={{ color: '#94A3B8', display: 'block', mb: 2 }}>
+                Categorization of failed requests by diagnostic signature.
               </Typography>
 
               <Box sx={{ width: '100%', height: 260 }}>
@@ -239,13 +259,16 @@ export const AnalyticsPage: React.FC = () => {
                       </Pie>
                       <Tooltip
                         contentStyle={{
-                          backgroundColor: '#1F2937',
-                          border: '1px solid #374151',
-                          borderRadius: 8,
-                          boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.5)',
+                          backgroundColor: 'rgba(10, 15, 29, 0.92)',
+                          backdropFilter: 'blur(12px)',
+                          WebkitBackdropFilter: 'blur(12px)',
+                          border: '1px solid rgba(255, 255, 255, 0.12)',
+                          borderRadius: 10,
+                          boxShadow: '0 10px 25px -3px rgba(0, 0, 0, 0.7)',
+                          fontFamily: '"JetBrains Mono", monospace',
                         }}
-                        itemStyle={{ color: '#F9FAFB', fontWeight: 600, fontSize: '0.875rem' }}
-                        labelStyle={{ color: '#F9FAFB', fontWeight: 700, marginBottom: 4 }}
+                        itemStyle={{ color: '#F8FAFC', fontWeight: 600, fontSize: '0.875rem' }}
+                        labelStyle={{ color: '#F8FAFC', fontWeight: 700, marginBottom: 4 }}
                         formatter={(value: any, name: any) => [`${value} failure${value > 1 ? 's' : ''}`, `${name}`]}
                       />
                     </PieChart>
@@ -259,7 +282,7 @@ export const AnalyticsPage: React.FC = () => {
                       height: '100%',
                     }}
                   >
-                    <Typography variant="body2" sx={{ color: '#10B981', fontWeight: 600 }}>
+                    <Typography variant="body2" sx={{ color: '#10B981', fontWeight: 700 }}>
                       Zero failure events recorded.
                     </Typography>
                   </Box>
@@ -273,7 +296,7 @@ export const AnalyticsPage: React.FC = () => {
       {/* Endpoint Comparison Table */}
       <Card sx={{ p: 2 }}>
         <CardContent>
-          <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>
+          <Typography variant="h6" sx={{ fontWeight: 700, letterSpacing: '-0.015em', mb: 2 }}>
             Endpoint Telemetry Audit Summary
           </Typography>
 
@@ -283,42 +306,52 @@ export const AnalyticsPage: React.FC = () => {
                 <Box
                   key={row.id}
                   sx={{
-                    p: 1.5,
-                    border: '1px solid #1F2937',
-                    borderRadius: 2,
-                    backgroundColor: '#111827',
+                    p: 1.75,
+                    border: '1px solid rgba(255, 255, 255, 0.08)',
+                    borderRadius: 2.5,
+                    backgroundColor: 'rgba(10, 15, 29, 0.85)',
                   }}
                 >
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
-                    <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#F9FAFB' }}>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1.25 }}>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#F8FAFC' }}>
                       {row.name}
                     </Typography>
-                    <Typography variant="body2" sx={{ color: row.passRate >= 95 ? '#10B981' : '#F59E0B', fontWeight: 700 }}>
-                      {row.passRate}% pass
-                    </Typography>
+                    <Chip
+                      label={`${row.passRate}% pass`}
+                      size="small"
+                      sx={{
+                        height: 20,
+                        fontSize: '0.65rem',
+                        fontWeight: 700,
+                        backgroundColor: row.passRate >= 95 ? 'rgba(16, 185, 129, 0.12)' : 'rgba(245, 158, 11, 0.12)',
+                        color: row.passRate >= 95 ? '#10B981' : '#F59E0B',
+                        border: row.passRate >= 95 ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid rgba(245, 158, 11, 0.3)',
+                        fontFamily: '"JetBrains Mono", monospace',
+                      }}
+                    />
                   </Box>
                   <Grid container spacing={1}>
                     <Grid item xs={4}>
-                      <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+                      <Typography variant="caption" sx={{ color: '#64748B', display: 'block', textTransform: 'uppercase', letterSpacing: '0.04em', fontSize: '0.68rem', fontWeight: 700 }}>
                         Samples
                       </Typography>
-                      <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                      <Typography variant="body2" sx={{ fontWeight: 600, fontFamily: '"JetBrains Mono", monospace' }}>
                         {row.total}
                       </Typography>
                     </Grid>
                     <Grid item xs={4}>
-                      <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+                      <Typography variant="caption" sx={{ color: '#64748B', display: 'block', textTransform: 'uppercase', letterSpacing: '0.04em', fontSize: '0.68rem', fontWeight: 700 }}>
                         Avg Latency
                       </Typography>
-                      <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                      <Typography variant="body2" sx={{ fontWeight: 600, fontFamily: '"JetBrains Mono", monospace', color: '#818CF8' }}>
                         {formatLatency(row.avgLatency)}
                       </Typography>
                     </Grid>
                     <Grid item xs={4}>
-                      <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+                      <Typography variant="caption" sx={{ color: '#64748B', display: 'block', textTransform: 'uppercase', letterSpacing: '0.04em', fontSize: '0.68rem', fontWeight: 700 }}>
                         Worst Latency
                       </Typography>
-                      <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                      <Typography variant="body2" sx={{ fontWeight: 600, fontFamily: '"JetBrains Mono", monospace', color: '#F59E0B' }}>
                         {formatLatency(row.maxLatency)}
                       </Typography>
                     </Grid>
@@ -340,14 +373,28 @@ export const AnalyticsPage: React.FC = () => {
                 </TableHead>
                 <TableBody>
                   {paginatedStats.map((row) => (
-                    <TableRow key={row.id} hover>
-                      <TableCell sx={{ fontWeight: 700, color: '#F9FAFB' }}>{row.name}</TableCell>
-                      <TableCell>{row.total}</TableCell>
-                      <TableCell sx={{ color: row.passRate >= 95 ? '#10B981' : '#F59E0B', fontWeight: 700 }}>
-                        {row.passRate}%
+                    <TableRow key={row.id} hover sx={{ '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.02)' } }}>
+                      <TableCell sx={{ fontWeight: 700, color: '#F8FAFC' }}>{row.name}</TableCell>
+                      <TableCell sx={{ fontFamily: '"JetBrains Mono", monospace' }}>{row.total}</TableCell>
+                      <TableCell>
+                        <Chip
+                          label={`${row.passRate}%`}
+                          size="small"
+                          sx={{
+                            height: 20,
+                            fontSize: '0.65rem',
+                            fontWeight: 700,
+                            backgroundColor: row.passRate >= 95 ? 'rgba(16, 185, 129, 0.12)' : 'rgba(245, 158, 11, 0.12)',
+                            color: row.passRate >= 95 ? '#10B981' : '#F59E0B',
+                            border: row.passRate >= 95 ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid rgba(245, 158, 11, 0.3)',
+                            fontFamily: '"JetBrains Mono", monospace',
+                          }}
+                        />
                       </TableCell>
-                      <TableCell>{formatLatency(row.avgLatency)}</TableCell>
-                      <TableCell align="right" sx={{ fontWeight: 600 }}>
+                      <TableCell sx={{ fontFamily: '"JetBrains Mono", monospace', color: '#818CF8' }}>
+                        {formatLatency(row.avgLatency)}
+                      </TableCell>
+                      <TableCell align="right" sx={{ fontWeight: 700, fontFamily: '"JetBrains Mono", monospace', color: '#F59E0B' }}>
                         {formatLatency(row.maxLatency)}
                       </TableCell>
                     </TableRow>
@@ -370,8 +417,8 @@ export const AnalyticsPage: React.FC = () => {
                 setPage(0);
               }}
               sx={{
-                borderTop: '1px solid #1F2937',
-                color: '#9CA3AF',
+                borderTop: '1px solid rgba(255, 255, 255, 0.08)',
+                color: '#94A3B8',
                 mt: 1.5,
                 '.MuiTablePagination-toolbar': {
                   flexWrap: 'wrap',
@@ -382,19 +429,19 @@ export const AnalyticsPage: React.FC = () => {
                 },
                 '.MuiTablePagination-selectLabel': {
                   fontSize: { xs: '0.75rem', sm: '0.875rem' },
-                  color: '#9CA3AF',
+                  color: '#94A3B8',
                 },
                 '.MuiTablePagination-select': {
                   fontSize: { xs: '0.75rem', sm: '0.875rem' },
-                  color: '#F9FAFB',
+                  color: '#F8FAFC',
                 },
                 '.MuiTablePagination-displayedRows': {
                   fontSize: { xs: '0.75rem', sm: '0.875rem' },
-                  color: '#9CA3AF',
+                  color: '#94A3B8',
                 },
                 '.MuiTablePagination-actions': {
                   ml: { xs: 0.5, sm: 1.5 },
-                  color: '#9CA3AF',
+                  color: '#94A3B8',
                 },
               }}
             />

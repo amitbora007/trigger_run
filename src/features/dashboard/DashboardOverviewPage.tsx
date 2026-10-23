@@ -108,6 +108,43 @@ export const DashboardOverviewPage: React.FC = () => {
 
   return (
     <Box>
+      {/* System Status HUD Pill */}
+      <Box
+        sx={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: 1.25,
+          px: 1.75,
+          py: 0.65,
+          borderRadius: 2,
+          backgroundColor: recentFailures.length === 0 ? 'rgba(16, 185, 129, 0.08)' : 'rgba(239, 68, 68, 0.08)',
+          border: recentFailures.length === 0 ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid rgba(239, 68, 68, 0.35)',
+          mb: 2,
+        }}
+      >
+        <Box
+          sx={{
+            width: 8,
+            height: 8,
+            borderRadius: '50%',
+            backgroundColor: recentFailures.length === 0 ? '#10B981' : '#EF4444',
+            animation: 'vigilPulse 2s infinite',
+          }}
+        />
+        <Typography
+          variant="caption"
+          sx={{
+            color: recentFailures.length === 0 ? '#10B981' : '#F87171',
+            fontWeight: 700,
+            letterSpacing: '0.08em',
+            textTransform: 'uppercase',
+            fontSize: '0.72rem',
+          }}
+        >
+          {recentFailures.length === 0 ? 'All Systems Nominal // Watchdog Armed' : `${recentFailures.length} Incidents In Audit Window`}
+        </Typography>
+      </Box>
+
       {/* Top Banner */}
       <Box
         sx={{
@@ -122,21 +159,25 @@ export const DashboardOverviewPage: React.FC = () => {
         <Box>
           <Typography
             variant="h4"
-            sx={{ fontWeight: 800, fontSize: { xs: '1.5rem', sm: '1.85rem', md: '2.125rem' } }}
+            sx={{
+              fontWeight: 800,
+              fontSize: { xs: '1.6rem', sm: '1.95rem', md: '2.25rem' },
+              letterSpacing: '-0.03em',
+            }}
           >
             VigilAPI Overview
           </Typography>
-          <Typography variant="body2" color="text.secondary">
-            Autonomous serverless monitoring health and performance metrics.
+          <Typography variant="body2" sx={{ color: '#94A3B8', mt: 0.25 }}>
+            Autonomous serverless monitoring health and performance telemetry.
           </Typography>
         </Box>
 
         <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap', width: { xs: '100%', sm: 'auto' } }}>
           <Button
             variant="outlined"
-            startIcon={<ScheduleIcon />}
+            startIcon={<ScheduleIcon sx={{ color: '#10B981' }} />}
             onClick={() => setCronModalOpen(true)}
-            sx={{ width: { xs: '100%', sm: 'auto' }, minHeight: 40 }}
+            sx={{ width: { xs: '100%', sm: 'auto' }, minHeight: 42 }}
           >
             Cadence: {cronCadenceLabel}
           </Button>
@@ -145,7 +186,7 @@ export const DashboardOverviewPage: React.FC = () => {
             variant="contained"
             startIcon={<AddIcon />}
             onClick={() => navigate('/endpoints')}
-            sx={{ width: { xs: '100%', sm: 'auto' }, minHeight: 40 }}
+            sx={{ width: { xs: '100%', sm: 'auto' }, minHeight: 42 }}
           >
             Add Monitored API
           </Button>
@@ -198,11 +239,25 @@ export const DashboardOverviewPage: React.FC = () => {
         <Grid item xs={12} lg={8}>
           <Card sx={{ height: '100%', p: 2 }}>
             <CardContent>
-              <Typography variant="h6" sx={{ fontWeight: 700, mb: 0.5 }}>
-                Response Latency Trend (ms)
-              </Typography>
-              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 2 }}>
-                Real-time latency trajectory for recent executions.
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.5 }}>
+                <Typography variant="h6" sx={{ fontWeight: 700, letterSpacing: '-0.015em' }}>
+                  Response Latency Trend (ms)
+                </Typography>
+                <Chip
+                  label="Real-time"
+                  size="small"
+                  sx={{
+                    height: 20,
+                    fontSize: '0.65rem',
+                    fontWeight: 700,
+                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                    color: '#10B981',
+                    border: '1px solid rgba(16, 185, 129, 0.3)',
+                  }}
+                />
+              </Box>
+              <Typography variant="caption" sx={{ color: '#94A3B8', display: 'block', mb: 2 }}>
+                Real-time latency trajectory for recent executions across all targets.
               </Typography>
 
               <Box sx={{ width: '100%', height: 260 }}>
@@ -211,36 +266,42 @@ export const DashboardOverviewPage: React.FC = () => {
                     <AreaChart data={latencyData} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
                       <defs>
                         <linearGradient id="latencyGradient" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#10B981" stopOpacity={0.4} />
-                          <stop offset="95%" stopColor="#10B981" stopOpacity={0.0} />
+                          <stop offset="0%" stopColor="#10B981" stopOpacity={0.45} />
+                          <stop offset="60%" stopColor="#10B981" stopOpacity={0.08} />
+                          <stop offset="100%" stopColor="#10B981" stopOpacity={0} />
                         </linearGradient>
                       </defs>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#1F2937" vertical={false} />
-                      <XAxis dataKey="time" stroke="#6B7280" fontSize={11} tickLine={false} />
+                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.05)" vertical={false} />
+                      <XAxis dataKey="time" stroke="#64748B" fontSize={11} tickLine={false} fontFamily='"JetBrains Mono", monospace' />
                       <YAxis
-                        stroke="#6B7280"
+                        stroke="#64748B"
                         fontSize={11}
                         tickLine={false}
+                        fontFamily='"JetBrains Mono", monospace'
                         tickFormatter={(v) => `${v}ms`}
                       />
                       <Tooltip
                         contentStyle={{
-                          backgroundColor: '#1F2937',
-                          border: '1px solid #374151',
-                          borderRadius: 8,
-                          boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.5)',
+                          backgroundColor: 'rgba(10, 15, 29, 0.92)',
+                          backdropFilter: 'blur(12px)',
+                          WebkitBackdropFilter: 'blur(12px)',
+                          border: '1px solid rgba(16, 185, 129, 0.35)',
+                          borderRadius: 10,
+                          boxShadow: '0 10px 25px -3px rgba(0, 0, 0, 0.7), 0 0 15px rgba(16, 185, 129, 0.2)',
+                          fontFamily: '"JetBrains Mono", monospace',
                         }}
-                        itemStyle={{ color: '#F9FAFB', fontSize: '0.875rem' }}
-                        labelStyle={{ color: '#F9FAFB', fontWeight: 700, marginBottom: 4 }}
-                        formatter={(v: any) => [`${v}ms`, 'Latency']}
+                        itemStyle={{ color: '#10B981', fontSize: '0.875rem', fontWeight: 600 }}
+                        labelStyle={{ color: '#F8FAFC', fontWeight: 700, marginBottom: 4 }}
+                        formatter={(v: any) => [`${v} ms`, 'Response Time']}
                       />
                       <Area
                         type="monotone"
                         dataKey="latency"
                         stroke="#10B981"
-                        strokeWidth={2}
+                        strokeWidth={2.5}
                         fillOpacity={1}
                         fill="url(#latencyGradient)"
+                        filter="drop-shadow(0 0 6px rgba(16, 185, 129, 0.4))"
                       />
                     </AreaChart>
                   </ResponsiveContainer>
@@ -267,37 +328,40 @@ export const DashboardOverviewPage: React.FC = () => {
         <Grid item xs={12} lg={4}>
           <Card sx={{ height: '100%', p: 2 }}>
             <CardContent>
-              <Typography variant="h6" sx={{ fontWeight: 700, mb: 0.5 }}>
+              <Typography variant="h6" sx={{ fontWeight: 700, letterSpacing: '-0.015em', mb: 0.5 }}>
                 Health Breakdown
               </Typography>
-              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 2 }}>
-                Distribution of execution outcomes.
+              <Typography variant="caption" sx={{ color: '#94A3B8', display: 'block', mb: 2 }}>
+                Distribution of execution outcomes across all targets.
               </Typography>
 
               <Box sx={{ width: '100%', height: 260 }}>
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={volumeData} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#1F2937" vertical={false} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.05)" vertical={false} />
                     <XAxis
                       dataKey="name"
-                      stroke="#6B7280"
+                      stroke="#64748B"
                       fontSize={11}
                       tickLine={false}
                       tickFormatter={(v) => (isMobile ? (v.startsWith('Healthy') ? 'Healthy' : 'Failed') : v)}
                     />
-                    <YAxis stroke="#6B7280" fontSize={11} tickLine={false} allowDecimals={false} />
+                    <YAxis stroke="#64748B" fontSize={11} tickLine={false} allowDecimals={false} fontFamily='"JetBrains Mono", monospace' />
                     <Tooltip
                       contentStyle={{
-                        backgroundColor: '#1F2937',
-                        border: '1px solid #374151',
-                        borderRadius: 8,
-                        boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.5)',
+                        backgroundColor: 'rgba(10, 15, 29, 0.92)',
+                        backdropFilter: 'blur(12px)',
+                        WebkitBackdropFilter: 'blur(12px)',
+                        border: '1px solid rgba(255, 255, 255, 0.12)',
+                        borderRadius: 10,
+                        boxShadow: '0 10px 25px -3px rgba(0, 0, 0, 0.7)',
+                        fontFamily: '"JetBrains Mono", monospace',
                       }}
-                      itemStyle={{ color: '#F9FAFB', fontSize: '0.875rem' }}
-                      labelStyle={{ color: '#F9FAFB', fontWeight: 700, marginBottom: 4 }}
+                      itemStyle={{ color: '#F8FAFC', fontSize: '0.875rem' }}
+                      labelStyle={{ color: '#F8FAFC', fontWeight: 700, marginBottom: 4 }}
                       formatter={(v: any) => [`${v} runs`, 'Volume']}
                     />
-                    <Bar dataKey="count" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="count" radius={[6, 6, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               </Box>
@@ -318,21 +382,46 @@ export const DashboardOverviewPage: React.FC = () => {
             }}
           >
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <ErrorOutlineIcon sx={{ color: '#EF4444' }} />
-              <Typography variant="h6" sx={{ fontWeight: 700 }}>
+              <ErrorOutlineIcon sx={{ color: recentFailures.length > 0 ? '#EF4444' : '#10B981' }} />
+              <Typography variant="h6" sx={{ fontWeight: 700, letterSpacing: '-0.015em' }}>
                 Recent Incident Alerts
               </Typography>
+              {recentFailures.length > 0 && (
+                <Chip
+                  label={`${recentFailures.length} Incidents`}
+                  size="small"
+                  color="error"
+                  sx={{ height: 20, fontSize: '0.65rem', fontWeight: 700 }}
+                />
+              )}
             </Box>
 
-            <Button size="small" onClick={() => navigate('/executions')}>
+            <Button
+              size="small"
+              variant="outlined"
+              onClick={() => navigate('/executions')}
+              sx={{ fontSize: '0.78rem' }}
+            >
               View Full History
             </Button>
           </Box>
 
           {recentFailures.length === 0 ? (
-            <Box sx={{ py: 4, textAlign: 'center' }}>
-              <Typography variant="body2" sx={{ color: '#10B981', fontWeight: 600 }}>
+            <Box
+              sx={{
+                py: 4.5,
+                textAlign: 'center',
+                backgroundColor: 'rgba(16, 185, 129, 0.03)',
+                borderRadius: 2,
+                border: '1px dashed rgba(16, 185, 129, 0.25)',
+              }}
+            >
+              <CheckCircleOutlineIcon sx={{ color: '#10B981', fontSize: 32, mb: 1 }} />
+              <Typography variant="body2" sx={{ color: '#10B981', fontWeight: 700 }}>
                 All systems optimal. Zero execution failures detected in recent window.
+              </Typography>
+              <Typography variant="caption" sx={{ color: '#94A3B8', display: 'block', mt: 0.5 }}>
+                Dispatcher actively auditing all endpoints according to pg_cron cadence.
               </Typography>
             </Box>
           ) : isMobile ? (
@@ -341,17 +430,18 @@ export const DashboardOverviewPage: React.FC = () => {
                 <Box
                   key={rf.id}
                   sx={{
-                    p: 1.5,
-                    border: '1px solid #1F2937',
-                    borderRadius: 2,
+                    p: 1.75,
+                    border: '1px solid rgba(239, 68, 68, 0.25)',
+                    borderRadius: 2.5,
                     backgroundColor: 'rgba(239, 68, 68, 0.04)',
+                    boxShadow: '0 2px 10px rgba(0, 0, 0, 0.3)',
                   }}
                 >
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-                    <Typography variant="caption" color="text.secondary">
+                    <Typography variant="caption" sx={{ color: '#94A3B8', fontFamily: '"JetBrains Mono", monospace' }}>
                       {formatRelativeTime(rf.started_at)}
                     </Typography>
-                    <Typography variant="caption" sx={{ fontWeight: 700, color: '#10B981' }}>
+                    <Typography variant="caption" sx={{ fontWeight: 700, color: '#10B981', fontFamily: '"JetBrains Mono", monospace' }}>
                       {formatLatency(rf.response_time_ms)}
                     </Typography>
                   </Box>
@@ -363,10 +453,11 @@ export const DashboardOverviewPage: React.FC = () => {
                       size="small"
                       color="error"
                       variant="outlined"
+                      sx={{ height: 20, fontSize: '0.65rem', fontWeight: 700 }}
                     />
                   </Box>
 
-                  <Typography variant="caption" sx={{ color: '#EF4444', wordBreak: 'break-word', display: 'block' }}>
+                  <Typography variant="caption" sx={{ color: '#F87171', wordBreak: 'break-word', display: 'block', fontFamily: '"JetBrains Mono", monospace' }}>
                     {rf.sanitized_error_message || 'Non-2xx response received'}
                   </Typography>
                 </Box>
@@ -386,8 +477,10 @@ export const DashboardOverviewPage: React.FC = () => {
                 </TableHead>
                 <TableBody>
                   {paginatedIncidents.map((rf) => (
-                    <TableRow key={rf.id} hover>
-                      <TableCell>{formatRelativeTime(rf.started_at)}</TableCell>
+                    <TableRow key={rf.id} hover sx={{ '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.02)' } }}>
+                      <TableCell sx={{ fontFamily: '"JetBrains Mono", monospace', fontSize: '0.8rem', color: '#94A3B8' }}>
+                        {formatRelativeTime(rf.started_at)}
+                      </TableCell>
                       <TableCell>
                         <StatusChip type="http-status" value={rf.status_code} />
                       </TableCell>
@@ -397,12 +490,13 @@ export const DashboardOverviewPage: React.FC = () => {
                           size="small"
                           color="error"
                           variant="outlined"
+                          sx={{ height: 20, fontSize: '0.65rem', fontWeight: 700 }}
                         />
                       </TableCell>
-                      <TableCell sx={{ color: '#EF4444', maxWidth: 300, wordBreak: 'break-word' }}>
+                      <TableCell sx={{ color: '#F87171', maxWidth: 320, wordBreak: 'break-word', fontFamily: '"JetBrains Mono", monospace', fontSize: '0.78rem' }}>
                         {rf.sanitized_error_message || 'Non-2xx response received'}
                       </TableCell>
-                      <TableCell align="right" sx={{ fontWeight: 600 }}>
+                      <TableCell align="right" sx={{ fontWeight: 700, fontFamily: '"JetBrains Mono", monospace', color: '#10B981' }}>
                         {formatLatency(rf.response_time_ms)}
                       </TableCell>
                     </TableRow>
@@ -426,8 +520,8 @@ export const DashboardOverviewPage: React.FC = () => {
               rowsPerPageOptions={[5, 10, 25]}
               labelRowsPerPage="Rows per page:"
               sx={{
-                borderTop: '1px solid #1F2937',
-                color: '#9CA3AF',
+                borderTop: '1px solid rgba(255, 255, 255, 0.08)',
+                color: '#94A3B8',
                 mt: 1.5,
                 '.MuiTablePagination-toolbar': {
                   flexWrap: 'wrap',
@@ -438,19 +532,19 @@ export const DashboardOverviewPage: React.FC = () => {
                 },
                 '.MuiTablePagination-selectLabel': {
                   fontSize: { xs: '0.75rem', sm: '0.875rem' },
-                  color: '#9CA3AF',
+                  color: '#94A3B8',
                 },
                 '.MuiTablePagination-select': {
                   fontSize: { xs: '0.75rem', sm: '0.875rem' },
-                  color: '#F9FAFB',
+                  color: '#F8FAFC',
                 },
                 '.MuiTablePagination-displayedRows': {
                   fontSize: { xs: '0.75rem', sm: '0.875rem' },
-                  color: '#9CA3AF',
+                  color: '#94A3B8',
                 },
                 '.MuiTablePagination-actions': {
                   ml: { xs: 0.5, sm: 1.5 },
-                  color: '#9CA3AF',
+                  color: '#94A3B8',
                 },
               }}
             />

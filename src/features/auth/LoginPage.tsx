@@ -71,32 +71,74 @@ export const LoginPage: React.FC = () => {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: '#0B0F19',
+        backgroundColor: 'transparent',
         p: 2,
+        position: 'relative',
+        overflow: 'hidden',
       }}
     >
-      <Card sx={{ maxWidth: 450, width: '100%', p: 2 }}>
+      {/* Background ambient radial lights */}
+      <Box
+        sx={{
+          position: 'absolute',
+          top: '20%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          width: 500,
+          height: 300,
+          borderRadius: '50%',
+          background: 'radial-gradient(ellipse, rgba(16, 185, 129, 0.15) 0%, transparent 70%)',
+          filter: 'blur(50px)',
+          pointerEvents: 'none',
+        }}
+      />
+
+      <Card
+        sx={{
+          maxWidth: 460,
+          width: '100%',
+          p: { xs: 2, sm: 2.5 },
+          backgroundColor: 'rgba(10, 15, 29, 0.85)',
+          backdropFilter: 'blur(20px)',
+          WebkitBackdropFilter: 'blur(20px)',
+          border: '1px solid rgba(255, 255, 255, 0.1)',
+          boxShadow: '0 20px 50px rgba(0, 0, 0, 0.8), 0 0 30px rgba(16, 185, 129, 0.12)',
+          position: 'relative',
+          zIndex: 1,
+        }}
+      >
         <CardContent>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 3 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.75, mb: 3 }}>
             <Box
               sx={{
-                width: 40,
-                height: 40,
-                borderRadius: '8px',
+                width: 44,
+                height: 44,
+                borderRadius: '12px',
                 background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
+                boxShadow: '0 0 20px rgba(16, 185, 129, 0.5)',
               }}
             >
-              <FlashOnIcon sx={{ color: '#fff', fontSize: 24 }} />
+              <FlashOnIcon sx={{ color: '#fff', fontSize: 26 }} />
             </Box>
             <Box>
-              <Typography variant="h5" sx={{ fontWeight: 800 }}>
+              <Typography variant="h5" sx={{ fontWeight: 800, letterSpacing: '-0.02em', color: '#F8FAFC' }}>
                 VigilAPI
               </Typography>
-              <Typography variant="caption" color="text.secondary">
-                Autonomous API Health & Monitoring Platform
+              <Typography
+                variant="caption"
+                sx={{
+                  color: '#10B981',
+                  fontWeight: 700,
+                  fontSize: '0.68rem',
+                  letterSpacing: '0.08em',
+                  textTransform: 'uppercase',
+                  display: 'block',
+                }}
+              >
+                Autonomous Telemetry Platform
               </Typography>
             </Box>
           </Box>
@@ -115,13 +157,13 @@ export const LoginPage: React.FC = () => {
           </Tabs>
 
           {error && (
-            <Alert severity="error" sx={{ mb: 2 }}>
+            <Alert severity="error" sx={{ mb: 2, backgroundColor: 'rgba(239, 68, 68, 0.12)', border: '1px solid rgba(239, 68, 68, 0.3)' }}>
               {error}
             </Alert>
           )}
 
           {successMsg && (
-            <Alert severity="success" sx={{ mb: 2 }}>
+            <Alert severity="success" sx={{ mb: 2, backgroundColor: 'rgba(16, 185, 129, 0.12)', border: '1px solid rgba(16, 185, 129, 0.3)' }}>
               {successMsg}
             </Alert>
           )}
@@ -157,6 +199,7 @@ export const LoginPage: React.FC = () => {
                 fullWidth
                 disabled={loading}
                 startIcon={<LockOutlinedIcon />}
+                sx={{ minHeight: 46 }}
               >
                 {loading
                   ? 'Processing...'
@@ -167,8 +210,8 @@ export const LoginPage: React.FC = () => {
             </Stack>
           </form>
 
-          <Divider sx={{ my: 3 }}>
-            <Typography variant="caption" color="text.secondary">
+          <Divider sx={{ my: 3, borderColor: 'rgba(255, 255, 255, 0.08)' }}>
+            <Typography variant="caption" sx={{ color: '#64748B', fontWeight: 700, letterSpacing: '0.08em' }}>
               QUICK EVALUATION
             </Typography>
           </Divider>
@@ -178,7 +221,18 @@ export const LoginPage: React.FC = () => {
             color="secondary"
             fullWidth
             onClick={handleDemoSignIn}
-            startIcon={<FlashOnIcon />}
+            startIcon={<FlashOnIcon sx={{ color: '#818CF8' }} />}
+            sx={{
+              minHeight: 44,
+              borderColor: 'rgba(99, 102, 241, 0.4)',
+              backgroundColor: 'rgba(99, 102, 241, 0.08)',
+              color: '#C7D2FE',
+              '&:hover': {
+                borderColor: '#818CF8',
+                backgroundColor: 'rgba(99, 102, 241, 0.16)',
+                boxShadow: '0 0 16px rgba(99, 102, 241, 0.3)',
+              },
+            }}
           >
             Explore Sandbox Demo (Instant 1-Click Access)
           </Button>

@@ -44,7 +44,11 @@ export const ExecutionDetailModal: React.FC<ExecutionDetailModalProps> = ({
         sx: {
           width: { xs: '100%', sm: 540 },
           maxWidth: '100vw',
-          backgroundColor: '#111827',
+          backgroundColor: 'rgba(10, 15, 29, 0.96)',
+          backdropFilter: 'blur(20px)',
+          WebkitBackdropFilter: 'blur(20px)',
+          borderLeft: '1px solid rgba(255, 255, 255, 0.1)',
+          boxShadow: '-10px 0 40px rgba(0, 0, 0, 0.8), 0 0 30px rgba(16, 185, 129, 0.08)',
           p: { xs: 2, sm: 3 },
         },
       }}
@@ -52,11 +56,11 @@ export const ExecutionDetailModal: React.FC<ExecutionDetailModalProps> = ({
       {/* Header */}
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
         <Box sx={{ minWidth: 0, pr: 1 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
             <StatusChip type="execution-result" value={execution.success} />
             <StatusChip type="http-status" value={execution.status_code} />
           </Box>
-          <Typography variant="h6" sx={{ fontWeight: 800, wordBreak: 'break-word' }}>
+          <Typography variant="h6" sx={{ fontWeight: 800, wordBreak: 'break-word', letterSpacing: '-0.02em', color: '#F8FAFC' }}>
             {endpointName || 'Execution Telemetry'}
           </Typography>
           <Typography

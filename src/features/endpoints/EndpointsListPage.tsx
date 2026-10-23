@@ -30,6 +30,7 @@ import {
   Stack,
   Divider,
   TablePagination,
+  Chip,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import SearchIcon from '@mui/icons-material/Search';
@@ -235,11 +236,11 @@ export const EndpointsListPage: React.FC = () => {
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
-                  <SearchIcon fontSize="small" sx={{ color: '#9CA3AF' }} />
+                  <SearchIcon fontSize="small" sx={{ color: '#10B981' }} />
                 </InputAdornment>
               ),
             }}
-            sx={{ width: { xs: '100%', md: 320 } }}
+            sx={{ width: { xs: '100%', md: 340 } }}
           />
         </Box>
       </Card>
@@ -274,16 +275,35 @@ export const EndpointsListPage: React.FC = () => {
                 key={ep.id}
                 sx={{
                   p: 2,
-                  border: '1px solid #1F2937',
-                  backgroundColor: '#111827',
+                  border: '1px solid rgba(255, 255, 255, 0.08)',
+                  backgroundColor: 'rgba(10, 15, 29, 0.85)',
+                  position: 'relative',
+                  overflow: 'hidden',
+                  '&:hover': {
+                    borderColor: 'rgba(16, 185, 129, 0.3)',
+                    boxShadow: '0 6px 20px rgba(0, 0, 0, 0.5), 0 0 15px rgba(16, 185, 129, 0.1)',
+                  },
                 }}
               >
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 1, mb: 1 }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 1, mb: 1.25 }}>
                   <Box sx={{ minWidth: 0, flex: 1 }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, flexWrap: 'wrap' }}>
+                      <Chip
+                        label="GET"
+                        size="small"
+                        sx={{
+                          height: 18,
+                          fontSize: '0.62rem',
+                          fontWeight: 800,
+                          backgroundColor: 'rgba(6, 182, 212, 0.12)',
+                          color: '#38BDF8',
+                          border: '1px solid rgba(6, 182, 212, 0.3)',
+                          fontFamily: '"JetBrains Mono", monospace',
+                        }}
+                      />
                       <Typography
                         variant="subtitle1"
-                        sx={{ fontWeight: 700, color: '#F9FAFB', wordBreak: 'break-word', lineHeight: 1.3 }}
+                        sx={{ fontWeight: 700, color: '#F8FAFC', wordBreak: 'break-word', lineHeight: 1.3 }}
                       >
                         {ep.name}
                       </Typography>
@@ -293,49 +313,59 @@ export const EndpointsListPage: React.FC = () => {
                         </Tooltip>
                       )}
                     </Box>
-                    <Typography
-                      variant="caption"
+                    <Box
                       sx={{
-                        fontFamily: '"JetBrains Mono", monospace',
-                        color: '#9CA3AF',
-                        display: 'block',
-                        wordBreak: 'break-all',
-                        mt: 0.5,
+                        mt: 0.75,
+                        p: 0.75,
+                        borderRadius: 1.5,
+                        backgroundColor: 'rgba(0, 0, 0, 0.35)',
+                        border: '1px solid rgba(255, 255, 255, 0.05)',
                       }}
                     >
-                      {ep.endpoint_url}
-                    </Typography>
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          fontFamily: '"JetBrains Mono", monospace',
+                          color: '#94A3B8',
+                          display: 'block',
+                          wordBreak: 'break-all',
+                          fontSize: '0.72rem',
+                        }}
+                      >
+                        {ep.endpoint_url}
+                      </Typography>
+                    </Box>
                   </Box>
                   <StatusChip type="endpoint-status" value={ep.is_enabled} />
                 </Box>
 
-                <Divider sx={{ my: 1.5, borderColor: '#1F2937' }} />
+                <Divider sx={{ my: 1.5, borderColor: 'rgba(255, 255, 255, 0.06)' }} />
 
                 <Grid container spacing={1.5} sx={{ mb: 2 }}>
                   <Grid item xs={6}>
-                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+                    <Typography variant="caption" sx={{ color: '#64748B', display: 'block', textTransform: 'uppercase', letterSpacing: '0.04em', fontSize: '0.68rem', fontWeight: 700 }}>
                       Cadence
                     </Typography>
-                    <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                    <Typography variant="body2" sx={{ fontWeight: 600, fontFamily: '"JetBrains Mono", monospace', fontSize: '0.82rem' }}>
                       {formatInterval(ep.interval_seconds)}
                     </Typography>
                   </Grid>
                   <Grid item xs={6}>
-                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+                    <Typography variant="caption" sx={{ color: '#64748B', display: 'block', textTransform: 'uppercase', letterSpacing: '0.04em', fontSize: '0.68rem', fontWeight: 700 }}>
                       Next Execution
                     </Typography>
                     <Typography
                       variant="body2"
-                      sx={{ color: ep.is_enabled ? '#10B981' : '#9CA3AF', fontWeight: 600 }}
+                      sx={{ color: ep.is_enabled ? '#10B981' : '#64748B', fontWeight: 600, fontFamily: '"JetBrains Mono", monospace', fontSize: '0.82rem' }}
                     >
                       {ep.is_enabled ? formatRelativeTime(ep.next_run_at) : 'Paused'}
                     </Typography>
                   </Grid>
                   <Grid item xs={12}>
-                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+                    <Typography variant="caption" sx={{ color: '#64748B', display: 'block', textTransform: 'uppercase', letterSpacing: '0.04em', fontSize: '0.68rem', fontWeight: 700 }}>
                       Last Execution
                     </Typography>
-                    <Typography variant="body2" sx={{ color: '#E5E7EB' }}>
+                    <Typography variant="body2" sx={{ color: '#CBD5E1', fontFamily: '"JetBrains Mono", monospace', fontSize: '0.82rem' }}>
                       {formatRelativeTime(ep.last_run_at)} {ep.last_run_at ? `(${formatDateTime(ep.last_run_at)})` : ''}
                     </Typography>
                   </Grid>
@@ -348,7 +378,7 @@ export const EndpointsListPage: React.FC = () => {
                     alignItems: 'center',
                     gap: 1,
                     pt: 1.5,
-                    borderTop: '1px solid #1F2937',
+                    borderTop: '1px solid rgba(255, 255, 255, 0.06)',
                   }}
                 >
                   <Button
@@ -369,7 +399,7 @@ export const EndpointsListPage: React.FC = () => {
                     color="inherit"
                     startIcon={ep.is_enabled ? <PauseIcon /> : <PlayArrowIcon />}
                     onClick={() => handleToggle(ep)}
-                    sx={{ flex: '1 1 auto', minHeight: 38, borderColor: '#374151' }}
+                    sx={{ flex: '1 1 auto', minHeight: 38 }}
                   >
                     {ep.is_enabled ? 'Pause' : 'Resume'}
                   </Button>
@@ -380,7 +410,7 @@ export const EndpointsListPage: React.FC = () => {
                     color="inherit"
                     startIcon={<EditIcon />}
                     onClick={() => handleOpenEdit(ep)}
-                    sx={{ minHeight: 38, borderColor: '#374151' }}
+                    sx={{ minHeight: 38 }}
                   >
                     Edit
                   </Button>
@@ -392,8 +422,11 @@ export const EndpointsListPage: React.FC = () => {
                     sx={{
                       minWidth: 38,
                       minHeight: 38,
-                      border: '1px solid #374151',
+                      border: '1px solid rgba(239, 68, 68, 0.3)',
                       borderRadius: '8px',
+                      '&:hover': {
+                        backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                      },
                     }}
                   >
                     <DeleteOutlineIcon fontSize="small" />
@@ -418,10 +451,23 @@ export const EndpointsListPage: React.FC = () => {
               </TableHead>
               <TableBody>
                 {paginatedEndpoints.map((ep) => (
-                  <TableRow key={ep.id} hover>
+                  <TableRow key={ep.id} hover sx={{ '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.02)' } }}>
                     <TableCell>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-                        <Typography variant="body2" sx={{ fontWeight: 700, color: '#F9FAFB' }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: 0.5 }}>
+                        <Chip
+                          label="GET"
+                          size="small"
+                          sx={{
+                            height: 18,
+                            fontSize: '0.62rem',
+                            fontWeight: 800,
+                            backgroundColor: 'rgba(6, 182, 212, 0.12)',
+                            color: '#38BDF8',
+                            border: '1px solid rgba(6, 182, 212, 0.3)',
+                            fontFamily: '"JetBrains Mono", monospace',
+                          }}
+                        />
+                        <Typography variant="body2" sx={{ fontWeight: 700, color: '#F8FAFC' }}>
                           {ep.name}
                         </Typography>
                         {ep.notify_on_failure && (
@@ -434,12 +480,13 @@ export const EndpointsListPage: React.FC = () => {
                         variant="caption"
                         sx={{
                           fontFamily: '"JetBrains Mono", monospace',
-                          color: '#9CA3AF',
+                          color: '#94A3B8',
                           display: 'block',
                           maxWidth: 360,
                           overflow: 'hidden',
                           textOverflow: 'ellipsis',
                           whiteSpace: 'nowrap',
+                          fontSize: '0.75rem',
                         }}
                       >
                         {ep.endpoint_url}
@@ -447,7 +494,7 @@ export const EndpointsListPage: React.FC = () => {
                     </TableCell>
 
                     <TableCell>
-                      <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                      <Typography variant="body2" sx={{ fontWeight: 600, fontFamily: '"JetBrains Mono", monospace' }}>
                         {formatInterval(ep.interval_seconds)}
                       </Typography>
                     </TableCell>
@@ -457,27 +504,27 @@ export const EndpointsListPage: React.FC = () => {
                     </TableCell>
 
                     <TableCell>
-                      <Typography variant="body2">
+                      <Typography variant="body2" sx={{ fontFamily: '"JetBrains Mono", monospace', fontSize: '0.8rem' }}>
                         {formatRelativeTime(ep.last_run_at)}
                       </Typography>
-                      <Typography variant="caption" color="text.secondary">
+                      <Typography variant="caption" sx={{ color: '#64748B', fontFamily: '"JetBrains Mono", monospace', fontSize: '0.7rem' }}>
                         {formatDateTime(ep.last_run_at)}
                       </Typography>
                     </TableCell>
 
                     <TableCell>
-                      <Typography variant="body2" sx={{ color: ep.is_enabled ? '#10B981' : '#9CA3AF' }}>
+                      <Typography variant="body2" sx={{ color: ep.is_enabled ? '#10B981' : '#64748B', fontFamily: '"JetBrains Mono", monospace', fontSize: '0.8rem' }}>
                         {ep.is_enabled ? formatRelativeTime(ep.next_run_at) : 'Paused'}
                       </Typography>
                       {ep.is_enabled && (
-                        <Typography variant="caption" color="text.secondary">
+                        <Typography variant="caption" sx={{ color: '#64748B', fontFamily: '"JetBrains Mono", monospace', fontSize: '0.7rem' }}>
                           {formatDateTime(ep.next_run_at)}
                         </Typography>
                       )}
                     </TableCell>
 
                     <TableCell align="right">
-                      <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 0.5 }}>
+                      <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 0.75 }}>
                         <Tooltip title="Test Run Now">
                           <span>
                             <IconButton
@@ -485,6 +532,14 @@ export const EndpointsListPage: React.FC = () => {
                               color="primary"
                               disabled={testingId === ep.id}
                               onClick={() => handleManualTest(ep)}
+                              sx={{
+                                border: '1px solid rgba(16, 185, 129, 0.3)',
+                                backgroundColor: 'rgba(16, 185, 129, 0.08)',
+                                '&:hover': {
+                                  backgroundColor: 'rgba(16, 185, 129, 0.2)',
+                                  boxShadow: '0 0 10px rgba(16, 185, 129, 0.4)',
+                                },
+                              }}
                             >
                               {testingId === ep.id ? (
                                 <CircularProgress size={16} />
@@ -500,6 +555,13 @@ export const EndpointsListPage: React.FC = () => {
                             size="small"
                             color={ep.is_enabled ? 'warning' : 'success'}
                             onClick={() => handleToggle(ep)}
+                            sx={{
+                              border: '1px solid rgba(255, 255, 255, 0.1)',
+                              backgroundColor: 'rgba(255, 255, 255, 0.02)',
+                              '&:hover': {
+                                backgroundColor: 'rgba(255, 255, 255, 0.08)',
+                              },
+                            }}
                           >
                             {ep.is_enabled ? (
                               <PauseIcon fontSize="small" />
@@ -510,7 +572,17 @@ export const EndpointsListPage: React.FC = () => {
                         </Tooltip>
 
                         <Tooltip title="Edit Configuration">
-                          <IconButton size="small" onClick={() => handleOpenEdit(ep)}>
+                          <IconButton
+                            size="small"
+                            onClick={() => handleOpenEdit(ep)}
+                            sx={{
+                              border: '1px solid rgba(255, 255, 255, 0.1)',
+                              backgroundColor: 'rgba(255, 255, 255, 0.02)',
+                              '&:hover': {
+                                backgroundColor: 'rgba(255, 255, 255, 0.08)',
+                              },
+                            }}
+                          >
                             <EditIcon fontSize="small" />
                           </IconButton>
                         </Tooltip>
@@ -520,6 +592,13 @@ export const EndpointsListPage: React.FC = () => {
                             size="small"
                             color="error"
                             onClick={() => setDeleteTarget(ep)}
+                            sx={{
+                              border: '1px solid rgba(239, 68, 68, 0.3)',
+                              backgroundColor: 'rgba(239, 68, 68, 0.05)',
+                              '&:hover': {
+                                backgroundColor: 'rgba(239, 68, 68, 0.15)',
+                              },
+                            }}
                           >
                             <DeleteOutlineIcon fontSize="small" />
                           </IconButton>
@@ -546,8 +625,8 @@ export const EndpointsListPage: React.FC = () => {
               setPage(0);
             }}
             sx={{
-              borderTop: '1px solid #1F2937',
-              color: '#9CA3AF',
+              borderTop: '1px solid rgba(255, 255, 255, 0.08)',
+              color: '#94A3B8',
               '.MuiTablePagination-toolbar': {
                 flexWrap: 'wrap',
                 justifyContent: { xs: 'center', sm: 'flex-end' },
