@@ -16,6 +16,9 @@ const SEED_ENDPOINTS: MonitoredEndpoint[] = [
     query_params: { env: 'production', v: '2' },
     headers: { 'Accept': 'application/json' },
     is_enabled: true,
+    notify_on_failure: true,
+    notification_email: null,
+    last_alert_sent_at: null,
     next_run_at: new Date(Date.now() + 180000).toISOString(),
     last_run_at: new Date(Date.now() - 120000).toISOString(),
     lease_expires_at: null,
@@ -33,6 +36,9 @@ const SEED_ENDPOINTS: MonitoredEndpoint[] = [
     query_params: {},
     headers: { 'X-Service': 'Payments' },
     is_enabled: true,
+    notify_on_failure: true,
+    notification_email: 'ops-team@company.internal',
+    last_alert_sent_at: null,
     next_run_at: new Date(Date.now() + 340000).toISOString(),
     last_run_at: new Date(Date.now() - 260000).toISOString(),
     lease_expires_at: null,
@@ -50,6 +56,9 @@ const SEED_ENDPOINTS: MonitoredEndpoint[] = [
     query_params: {},
     headers: {},
     is_enabled: false,
+    notify_on_failure: false,
+    notification_email: null,
+    last_alert_sent_at: null,
     next_run_at: new Date(Date.now() + 720000).toISOString(),
     last_run_at: new Date(Date.now() - 3600000).toISOString(),
     lease_expires_at: null,
@@ -110,6 +119,8 @@ export function useEndpoints() {
         query_params: queryParamsObj,
         headers: headersObj,
         is_enabled: formData.is_enabled,
+        notify_on_failure: formData.notify_on_failure ?? true,
+        notification_email: formData.notification_email?.trim() || null,
         next_run_at: new Date().toISOString(),
       };
 
@@ -120,6 +131,7 @@ export function useEndpoints() {
           user_id: user?.id || 'demo-user',
           last_run_at: null,
           lease_expires_at: null,
+          last_alert_sent_at: null,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         };
@@ -161,6 +173,8 @@ export function useEndpoints() {
         query_params: queryParamsObj,
         headers: headersObj,
         is_enabled: formData.is_enabled,
+        notify_on_failure: formData.notify_on_failure ?? true,
+        notification_email: formData.notification_email?.trim() || null,
         updated_at: new Date().toISOString(),
       };
 

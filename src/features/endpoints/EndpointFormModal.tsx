@@ -58,6 +58,14 @@ const endpointSchema = z.object({
   query_params: z.array(z.object({ key: z.string(), value: z.string() })),
   headers: z.array(z.object({ key: z.string(), value: z.string() })),
   is_enabled: z.boolean(),
+  notify_on_failure: z.boolean(),
+  notification_email: z
+    .string()
+    .optional()
+    .refine(
+      (val) => !val || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val),
+      { message: 'Please enter a valid email address' }
+    ),
 });
 
 interface EndpointFormModalProps {
@@ -95,6 +103,8 @@ export const EndpointFormModal: React.FC<EndpointFormModalProps> = ({
       query_params: [],
       headers: [],
       is_enabled: true,
+      notify_on_failure: true,
+      notification_email: '',
     },
   });
 
@@ -128,6 +138,8 @@ export const EndpointFormModal: React.FC<EndpointFormModalProps> = ({
         query_params: qpArray,
         headers: hdrArray,
         is_enabled: endpoint.is_enabled,
+        notify_on_failure: endpoint.notify_on_failure ?? true,
+        notification_email: endpoint.notification_email || '',
       });
     } else {
       reset({
@@ -138,6 +150,8 @@ export const EndpointFormModal: React.FC<EndpointFormModalProps> = ({
         query_params: [],
         headers: [],
         is_enabled: true,
+        notify_on_failure: true,
+        notification_email: '',
       });
     }
     setSubmitError(null);
@@ -188,6 +202,7 @@ export const EndpointFormModal: React.FC<EndpointFormModalProps> = ({
         >
           <Tab label="Configuration" />
           <Tab label="Headers & Query Params" />
+          <Tab label="Alerts & Notifications" />
         </Tabs>
       </Box>
 
@@ -463,6 +478,61 @@ export const EndpointFormModal: React.FC<EndpointFormModalProps> = ({
                   </Stack>
                 )}
               </Box>
+            </Stack>
+          )}
+
+          {tabIndex === 2 && (
+            <Stack spacing={3}>
+              <Box
+                sx={{
+                  p: 2,
+                  borderRadius: 2,
+                  border: '1px solid #1F2937',
+                  backgroundColor: 'rgba(16, 185, 129, 0.04)',
+                }}
+              >
+                <Controller
+                  name="notify_on_failure"
+                  control={control}
+                  render={({ field }) => (
+                    <FormControlLabel
+                      control={<Switch checked={field.value} onChange={field.onChange} color="primary" />}
+                      label={
+                        <Box>
+                          <Typography variant="body1" sx={{ fontWeight: 600 }}>
+                            Send Email Alert on Failure
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            Dispatches an immediate incident email via Resend when a scheduled health check fails or times out.
+                          </Typography>
+                        </Box>
+                      }
+                    />
+                  )}
+                />
+              </Box>
+
+              <Controller
+                name="notification_email"
+                control={control}
+                render={({ field }) => (
+                  <TextField
+                    {...field}
+                    label="Alert Recipient Email"
+                    placeholder="e.g. alerts@company.com (leave blank for account email)"
+                    fullWidth
+                    error={Boolean(errors.notification_email)}
+                    helperText={
+                      errors.notification_email?.message ||
+                      'Optional: Specify a custom team or ops email. If left blank, alerts are sent to your registered account email.'
+                    }
+                  />
+                )}
+              />
+
+              <Alert severity="info" sx={{ fontSize: '0.8125rem' }}>
+                <strong>Alert Cooldown Protection:</strong> To prevent alert storms during extended outages, VigilAPI enforces a 15-minute cooldown between incident emails for the same endpoint.
+              </Alert>
             </Stack>
           )}
         </DialogContent>

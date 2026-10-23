@@ -114,4 +114,91 @@ describe('EndpointFormModal Component', () => {
       );
     });
   });
+
+  it('renders Alerts & Notifications tab and allows configuring alert email', async () => {
+    const handleSubmit = vi.fn().mockResolvedValue(true);
+    const handleClose = vi.fn();
+
+    renderWithTheme(
+      <EndpointFormModal
+        open={true}
+        endpoint={null}
+        onClose={handleClose}
+        onSubmit={handleSubmit}
+      />
+    );
+
+    // Switch to Alerts & Notifications tab
+    const alertsTab = screen.getByRole('tab', { name: /Alerts & Notifications/i });
+    fireEvent.click(alertsTab);
+
+    expect(screen.getByText(/Send Email Alert on Failure/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Alert Recipient Email/i)).toBeInTheDocument();
+    expect(screen.getByText(/Alert Cooldown Protection/i)).toBeInTheDocument();
+
+    // Fill in a custom alert email
+    const emailInput = screen.getByLabelText(/Alert Recipient Email/i);
+    fireEvent.change(emailInput, { target: { value: 'ops-lead@company.com' } });
+
+    // Switch back to Configuration tab to fill required fields
+    const configTab = screen.getByRole('tab', { name: /Configuration/i });
+    fireEvent.click(configTab);
+
+    fireEvent.change(screen.getByLabelText(/Endpoint Name/i), {
+      target: { value: 'Notification Check API' },
+    });
+    fireEvent.change(screen.getByLabelText(/Target HTTP GET URL/i), {
+      target: { value: 'https://httpbin.org/status/200' },
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: /Save & Activate/i }));
+
+    await waitFor(() => {
+      expect(handleSubmit).toHaveBeenCalledWith(
+        expect.objectContaining({
+          name: 'Notification Check API',
+          notify_on_failure: true,
+          notification_email: 'ops-lead@company.com',
+        })
+      );
+    });
+  });
+
+  it('rejects invalid notification email address', async () => {
+    renderWithTheme(
+      <EndpointFormModal
+        open={true}
+        endpoint={null}
+        onClose={vi.fn()}
+        onSubmit={vi.fn()}
+      />
+    );
+
+    // Switch to Alerts tab
+    const alertsTab = screen.getByRole('tab', { name: /Alerts & Notifications/i });
+    fireEvent.click(alertsTab);
+
+    const emailInput = screen.getByLabelText(/Alert Recipient Email/i);
+    fireEvent.change(emailInput, { target: { value: 'invalid-email-address' } });
+
+    // Switch to Config tab and submit
+    const configTab = screen.getByRole('tab', { name: /Configuration/i });
+    fireEvent.click(configTab);
+
+    fireEvent.change(screen.getByLabelText(/Endpoint Name/i), {
+      target: { value: 'Invalid Email API' },
+    });
+    fireEvent.change(screen.getByLabelText(/Target HTTP GET URL/i), {
+      target: { value: 'https://httpbin.org/status/200' },
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: /Save & Activate/i }));
+
+    // Switch back to Alerts tab to see the error message
+    fireEvent.click(alertsTab);
+
+    await waitFor(() => {
+      expect(screen.getByText(/Please enter a valid email address/i)).toBeInTheDocument();
+    });
+  });
 });

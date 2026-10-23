@@ -38,6 +38,7 @@ import PauseIcon from '@mui/icons-material/Pause';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import FlashOnIcon from '@mui/icons-material/FlashOn';
+import NotificationsActiveIcon from '@mui/icons-material/NotificationsActive';
 import { useEndpoints } from './hooks/useEndpoints';
 import { useExecutions } from '../executions/hooks/useExecutions';
 import { EndpointFormModal } from './EndpointFormModal';
@@ -279,12 +280,19 @@ export const EndpointsListPage: React.FC = () => {
               >
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 1, mb: 1 }}>
                   <Box sx={{ minWidth: 0, flex: 1 }}>
-                    <Typography
-                      variant="subtitle1"
-                      sx={{ fontWeight: 700, color: '#F9FAFB', wordBreak: 'break-word', lineHeight: 1.3 }}
-                    >
-                      {ep.name}
-                    </Typography>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, flexWrap: 'wrap' }}>
+                      <Typography
+                        variant="subtitle1"
+                        sx={{ fontWeight: 700, color: '#F9FAFB', wordBreak: 'break-word', lineHeight: 1.3 }}
+                      >
+                        {ep.name}
+                      </Typography>
+                      {ep.notify_on_failure && (
+                        <Tooltip title={`Email alerts enabled${ep.notification_email ? `: ${ep.notification_email}` : ''}`}>
+                          <NotificationsActiveIcon sx={{ fontSize: 16, color: '#10B981', flexShrink: 0 }} />
+                        </Tooltip>
+                      )}
+                    </Box>
                     <Typography
                       variant="caption"
                       sx={{
@@ -412,9 +420,16 @@ export const EndpointsListPage: React.FC = () => {
                 {paginatedEndpoints.map((ep) => (
                   <TableRow key={ep.id} hover>
                     <TableCell>
-                      <Typography variant="body2" sx={{ fontWeight: 700, color: '#F9FAFB' }}>
-                        {ep.name}
-                      </Typography>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+                        <Typography variant="body2" sx={{ fontWeight: 700, color: '#F9FAFB' }}>
+                          {ep.name}
+                        </Typography>
+                        {ep.notify_on_failure && (
+                          <Tooltip title={`Email alerts enabled${ep.notification_email ? `: ${ep.notification_email}` : ''}`}>
+                            <NotificationsActiveIcon sx={{ fontSize: 16, color: '#10B981', flexShrink: 0 }} />
+                          </Tooltip>
+                        )}
+                      </Box>
                       <Typography
                         variant="caption"
                         sx={{

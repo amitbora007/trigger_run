@@ -90,7 +90,8 @@ flowchart TD
   4. **Stops the Stopwatch**: Calculates the exact round-trip response time in milliseconds.
   5. **Sanitizes Sensitive Data**: Hides sensitive header values (like Authorization tokens, passwords, or cookies) so secrets are never logged in plain text.
   6. **Saves Results**: Writes the telemetry record into `endpoint_executions` and advances the endpoint's `next_run_at` (e.g., `NOW() + 10 minutes`).
-  7. **Shuts Down**: As soon as the checks are finished, the function terminates. You only pay/use compute for the few milliseconds it was active!
+  7. **Resend Email Failure Alerting**: If the check failed or timed out and the endpoint has `notify_on_failure` enabled, the Edge Function checks the 15-minute cooldown (`ALERT_COOLDOWN_MS = 15 * 60 * 1000`). If eligible, it sends an immediate incident email via Resend (`POST https://api.resend.com/emails`) detailing the endpoint name, diagnostic failure reason, and exact timestamp, then updates `last_alert_sent_at`.
+  8. **Shuts Down**: As soon as the checks are finished, the function terminates. You only pay/use compute for the few milliseconds it was active!
 
 ---
 
@@ -157,6 +158,7 @@ Every 60 seconds, PostgreSQL automatically calls the Edge Function. The Edge Fun
 | **Responsive Viewport Pagination** | Eliminates DOM bloating and horizontal clipping on mobile devices ($320\text{px} - 390\text{px}$). | Uses Material UI `TablePagination` with dual-mode responsive rendering (cards on mobile, tables on desktop) across all 4 core pages. |
 | **Full Retention Telemetry Chunking** | Prevents silent data truncation and PostgREST 1,000-row limits. | Chunked range querying (`range(from, from + 999)`) fetches the entire 7-day execution dataset safely. |
 | **Isolated Sandbox Authentication** | Prevents accidental credential leaks and unauthorized demo fallback. | Strict password verification with Supabase Auth; demo mode strictly isolated to explicit "Explore Sandbox Demo" button. |
+| **Headless Resend Incident Alerting & Cooldown** | Instantly notifies engineers of outages 24/7 without requiring the dashboard to be open, while protecting email quotas. | If a background check fails and `notify_on_failure` is on, the Edge Function invokes Resend's REST API. A 15-minute per-endpoint cooldown prevents alert storms and guarantees quota safety. |
 
 ---
 

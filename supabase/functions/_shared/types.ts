@@ -21,6 +21,9 @@ export interface MonitoredEndpoint {
   next_run_at: string;
   last_run_at: string | null;
   lease_expires_at: string | null;
+  notify_on_failure?: boolean;
+  notification_email?: string | null;
+  last_alert_sent_at?: string | null;
   created_at: string;
   updated_at: string;
 }

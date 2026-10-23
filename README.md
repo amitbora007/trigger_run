@@ -28,6 +28,7 @@ It runs scheduled HTTP health checks **100% independently of client sessions**. 
 - **Enterprise SaaS Dashboard & Responsive Pagination**: Polished Material UI interface with live status chips, dynamic Recharts visualizations (latency trends & volume breakdown), manual run triggers, a safe JSON response inspector, and fully responsive pagination across all 4 core views (Overview Incident Alerts, Monitored Endpoints, Execution History, Analytics Audit Summary).
 - **Mobile-Adaptive Layouts**: Dual-mode rendering with stacked card lists on mobile viewports and scrollable tables on desktop, ensuring zero horizontal overflow or clipping down to 320px screens.
 - **Uncapped Historical Querying**: Chunked range querying (`range(from, from + 999)`) ensures all execution records within the 7-day retention period are fetched and analyzed without artificial limits.
+- **Resend Incident Email Alerting & Quota Cooldown**: Instant email notifications dispatched headlessly via Resend (`POST https://api.resend.com/emails`) when an endpoint check fails or times out, conveying endpoint name, diagnostic failure reason, and exact timestamp. Built-in 15-minute per-endpoint cooldown prevents alert storms and protects free-tier limits.
 - **Strict Authentication & Isolated Sandbox**: Secure Supabase password validation with explicit credential error handling and demo mode strictly isolated to manual sandbox exploration.
 - **Automated Retention**: Daily pg_cron job purges execution logs older than 7 days, preventing unbounded database growth.
 
@@ -182,8 +183,10 @@ npx supabase login
 # Link your remote project
 npx supabase link --project-ref your-project-id
 
-# Set Edge Function secret for scheduler invocation
+# Set Edge Function secret for scheduler invocation and Resend email alerts
 npx supabase secrets set SCHEDULER_SECRET=generate-a-random-32-char-secret
+npx supabase secrets set RESEND_API_KEY=re_your_resend_api_key
+npx supabase secrets set CONTACT_EMAIL_FROM="VigilAPI <onboarding@resend.dev>"
 
 # Deploy the dispatcher function
 npx supabase functions deploy dispatcher --no-verify-jwt
