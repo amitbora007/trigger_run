@@ -94,20 +94,20 @@ CREATE TABLE IF NOT EXISTS public.endpoint_executions (
 );
 
 -- 5. Performance Indexes
-CREATE INDEX IF NOT EXISTS idx_endpoints_scheduler_claim 
-ON public.monitored_endpoints (next_run_at ASC, lease_expires_at) 
+CREATE INDEX IF NOT EXISTS idx_endpoints_scheduler_claim
+ON public.monitored_endpoints (next_run_at ASC, lease_expires_at)
 WHERE is_enabled = true;
 
-CREATE INDEX IF NOT EXISTS idx_endpoints_user 
+CREATE INDEX IF NOT EXISTS idx_endpoints_user
 ON public.monitored_endpoints (user_id, created_at DESC);
 
-CREATE INDEX IF NOT EXISTS idx_executions_endpoint_history 
+CREATE INDEX IF NOT EXISTS idx_executions_endpoint_history
 ON public.endpoint_executions (endpoint_id, created_at DESC);
 
-CREATE INDEX IF NOT EXISTS idx_executions_user_analytics 
+CREATE INDEX IF NOT EXISTS idx_executions_user_analytics
 ON public.endpoint_executions (user_id, created_at DESC);
 
-CREATE INDEX IF NOT EXISTS idx_executions_retention_purge 
+CREATE INDEX IF NOT EXISTS idx_executions_retention_purge
 ON public.endpoint_executions (created_at ASC);
 
 -- 6. Row-Level Security (RLS) Configuration
@@ -271,7 +271,7 @@ DECLARE
 BEGIN
   DELETE FROM public.endpoint_executions
   WHERE created_at < timezone('utc'::text, now()) - (p_retention_days || ' days')::INTERVAL;
-  
+
   GET DIAGNOSTICS v_deleted_count = ROW_COUNT;
   RETURN v_deleted_count;
 END;

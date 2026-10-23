@@ -20,7 +20,7 @@ SET search_path = cron, public
 AS $$
 BEGIN
   RETURN QUERY
-  SELECT 
+  SELECT
     j.jobid,
     j.schedule,
     j.command,
