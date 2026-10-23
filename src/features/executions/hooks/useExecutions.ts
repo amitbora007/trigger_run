@@ -98,31 +98,70 @@ export function useExecutions(filters?: ExecutionFilterOptions) {
         } else if (filters?.status === 'failure') {
           filtered = filtered.filter((x) => !x.success);
         }
-        return filtered.slice(0, filters?.limit || 100);
+        return filters?.limit ? filtered.slice(0, filters.limit) : filtered;
       }
 
-      let q = supabase
-        .from('endpoint_executions')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (filters?.endpointId) {
-        q = q.eq('endpoint_id', filters.endpointId);
-      }
-      if (filters?.status === 'success') {
-        q = q.eq('success', true);
-      } else if (filters?.status === 'failure') {
-        q = q.eq('success', false);
-      }
+      // If a specific limit is requested, perform a direct limited query
       if (filters?.limit) {
+        let q = supabase
+          .from('endpoint_executions')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        if (filters?.endpointId) {
+          q = q.eq('endpoint_id', filters.endpointId);
+        }
+        if (filters?.status === 'success') {
+          q = q.eq('success', true);
+        } else if (filters?.status === 'failure') {
+          q = q.eq('success', false);
+        }
         q = q.limit(filters.limit);
-      } else {
-        q = q.limit(100);
+
+        const { data, error } = await q;
+        if (error) throw error;
+        return data || [];
       }
 
-      const { data, error } = await q;
-      if (error) throw error;
-      return data || [];
+      // If no limit is passed (e.g. Execution History, Analytics, Dashboard), fetch all executions within 7-day retention
+      let allData: EndpointExecution[] = [];
+      const batchSize = 1000;
+      let from = 0;
+      let hasMore = true;
+
+      while (hasMore) {
+        let q = supabase
+          .from('endpoint_executions')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .range(from, from + batchSize - 1);
+
+        if (filters?.endpointId) {
+          q = q.eq('endpoint_id', filters.endpointId);
+        }
+        if (filters?.status === 'success') {
+          q = q.eq('success', true);
+        } else if (filters?.status === 'failure') {
+          q = q.eq('success', false);
+        }
+
+        const { data, error } = await q;
+        if (error) throw error;
+
+        if (!data || data.length === 0) {
+          hasMore = false;
+        } else {
+          allData = allData.concat(data);
+          if (data.length < batchSize) {
+            hasMore = false;
+          } else {
+            from += batchSize;
+            if (from >= 10000) hasMore = false;
+          }
+        }
+      }
+
+      return allData;
     },
     refetchInterval: 10000,
   });

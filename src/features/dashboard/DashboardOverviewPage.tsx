@@ -50,7 +50,7 @@ export const DashboardOverviewPage: React.FC = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const { endpoints, isLoading: isEndpointsLoading } = useEndpoints();
-  const { executions, isLoading: isExecutionsLoading } = useExecutions({ limit: 100 });
+  const { executions, isLoading: isExecutionsLoading } = useExecutions();
   const [cronModalOpen, setCronModalOpen] = React.useState(false);
   const { humanLabel: cronCadenceLabel } = useCronSchedule();
 

@@ -43,7 +43,7 @@ export const AnalyticsPage: React.FC = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const { endpoints, isLoading: isEndpointsLoading } = useEndpoints();
-  const { executions, isLoading: isExecutionsLoading } = useExecutions({ limit: 500 });
+  const { executions, isLoading: isExecutionsLoading } = useExecutions();
   const [page, setPage] = useState<number>(0);
   const [rowsPerPage, setRowsPerPage] = useState<number>(5);
 

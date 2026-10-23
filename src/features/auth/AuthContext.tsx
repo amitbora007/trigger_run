@@ -29,12 +29,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isDemoMode, setIsDemoMode] = useState(!isSupabaseConfigured);
+  const [isDemoMode, setIsDemoMode] = useState(false);
 
   useEffect(() => {
     if (!isSupabaseConfigured) {
-      // Auto-enable demo mode if no supabase credentials provided yet
-      setUser(DEMO_USER);
       setIsLoading(false);
       return;
     }
@@ -61,29 +59,42 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const signIn = async (email: string, password: string) => {
-    if (isDemoMode) {
-      setUser({ ...DEMO_USER, email });
-      return { error: null };
+    if (!isSupabaseConfigured) {
+      return {
+        error: new Error(
+          'Supabase credentials are not configured in environment variables. To explore without Supabase, click "Explore Sandbox Demo".'
+        ),
+      };
     }
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    return { error: error as Error | null };
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) {
+      return { error: error as Error | null };
+    }
+    setIsDemoMode(false);
+    setUser(data.user);
+    setSession(data.session);
+    return { error: null };
   };
 
   const signUp = async (email: string, password: string) => {
-    if (isDemoMode) {
-      setUser({ ...DEMO_USER, email });
-      return { error: null };
+    if (!isSupabaseConfigured) {
+      return {
+        error: new Error(
+          'Supabase credentials are not configured in environment variables. To explore without Supabase, click "Explore Sandbox Demo".'
+        ),
+      };
     }
     const { error } = await supabase.auth.signUp({ email, password });
     return { error: error as Error | null };
   };
 
   const signOut = async () => {
-    if (isDemoMode) {
-      setUser(null);
-      return;
+    setIsDemoMode(false);
+    setUser(null);
+    setSession(null);
+    if (isSupabaseConfigured) {
+      await supabase.auth.signOut();
     }
-    await supabase.auth.signOut();
   };
 
   const enableDemoMode = () => {
