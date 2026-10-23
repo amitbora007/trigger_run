@@ -79,7 +79,10 @@ It runs scheduled HTTP health checks **100% independently of client sessions**. 
 │   └── BUGS.md                  # Concurrency, edge cases & vulnerability analysis
 ├── supabase/
 │   ├── migrations/
-│   │   └── 20240101000000_init_schema.sql  # Schema, RLS, RPCs & Cron
+│   │   ├── 20261021120000_init_schema.sql             # Schema, RLS, RPCs & Cron
+│   │   ├── 20261022120000_cron_schedule_rpc.sql       # Cadence RPCs & alter_job
+│   │   ├── 20261022150000_security_invoker_view.sql   # Watchdog view security hardening
+│   │   └── 20261023110000_add_email_notifications.sql # Resend failure email notification columns
 │   └── functions/
 │       ├── _shared/
 │       │   ├── ssrf.ts          # SSRF & IP CIDR validation engine
@@ -171,8 +174,8 @@ Follow these steps to deploy VigilAPI to a free Supabase project:
 
 ### Step 2: Apply Database Migrations
 1. In the Supabase Dashboard, open the **SQL Editor**.
-2. Paste the contents of [`supabase/migrations/20240101000000_init_schema.sql`](supabase/migrations/20240101000000_init_schema.sql) and run it.
-3. This creates all tables (`profiles`, `monitored_endpoints`, `endpoint_executions`), security triggers, RLS policies, indexes, and stored procedures (`claim_due_endpoints`, `record_execution_and_reschedule`, `purge_expired_executions`).
+2. Paste the contents of [`supabase/migrations/20261021120000_init_schema.sql`](supabase/migrations/20261021120000_init_schema.sql) and run it.
+3. Apply subsequent incremental migrations in order (`20261022120000_cron_schedule_rpc.sql`, `20261022150000_security_invoker_view.sql`, and `20261023110000_add_email_notifications.sql`) or push via Supabase CLI (`npx supabase db push`).
 
 ### Step 3: Deploy the Edge Function
 Using the Supabase CLI:

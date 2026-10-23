@@ -103,7 +103,7 @@ Supabase is often described as an "open-source Firebase alternative". In simple 
 Here is how each layer of VigilAPI is deployed to Supabase:
 
 ### Step 1: Deploying the Database Schema (`init_schema.sql`)
-1. In the Supabase project, we applied the migration script (`supabase/migrations/20240101000000_init_schema.sql`).
+1. In the Supabase project, we applied the migration script (`supabase/migrations/20261021120000_init_schema.sql`).
 2. This created:
    - The tables (`monitored_endpoints`, `endpoint_executions`, `profiles`).
    - Row Level Security (RLS) rules: ensures User A can never see or edit User B's APIs.

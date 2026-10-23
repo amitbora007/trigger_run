@@ -1,5 +1,8 @@
+-- ==============================================================================
+-- VigilAPI: Database Migration 20261023110000_add_email_notifications.sql
 -- Migration: Add Email Notification columns to monitored_endpoints
 -- Supports Resend automated alert notifications on health check failures
+-- ==============================================================================
 
 ALTER TABLE public.monitored_endpoints
 ADD COLUMN IF NOT EXISTS notify_on_failure BOOLEAN NOT NULL DEFAULT true,

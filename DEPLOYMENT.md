@@ -29,7 +29,7 @@ If you are setting up a fresh Supabase project:
 
 1. Open your project in the [Supabase Dashboard](https://supabase.com/dashboard).
 2. Navigate to the **SQL Editor** on the left navigation panel.
-3. Open [`supabase/migrations/20240101000000_init_schema.sql`](supabase/migrations/20240101000000_init_schema.sql) in this repository, copy its entire contents, and paste it into the SQL editor.
+3. Open [`supabase/migrations/20261021120000_init_schema.sql`](supabase/migrations/20261021120000_init_schema.sql) in this repository, copy its entire contents, and paste it into the SQL editor.
 4. Click **Run**.
 
 ### Verification
@@ -133,7 +133,7 @@ LIMIT 10;
 1. Click the **"Cadence: ..."** button on the VigilAPI Dashboard (or click the **`pg_cron`** chip in the top navigation bar).
 2. Choose your preferred interval (e.g. *Every 3 minutes (`*/3 * * * *`)* or enter a custom cron expression).
 3. Click **Save Schedule**.
-*(Requires running the migration `supabase/migrations/20240102000000_cron_schedule_rpc.sql` once in the Supabase SQL editor).*
+*(Requires running the migration `supabase/migrations/20261022120000_cron_schedule_rpc.sql` once in the Supabase SQL editor).*
 
 **Option B: Direct SQL via Supabase SQL Editor**
 ```sql
